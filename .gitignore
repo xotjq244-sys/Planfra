@@ -1,0 +1,23 @@
+# OS / Google Drive
+Thumbs.db
+desktop.ini
+.DS_Store
+.tmp.drive*
+*.gdoc
+*.gsheet
+*.gslides
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# Node / build
+node_modules/
+dist/
+build/
+*.log
+
+# Secrets
+.env
+.env.*

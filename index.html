@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Planfra</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<script>
+  // 첫 페인트 전에 테마를 적용해 라이트 화면이 번쩍이는 것을 막는다
+  try {
+    if (localStorage.getItem("planfra-theme") === "dark") {
+      document.documentElement.dataset.theme = "dark";
+    }
+  } catch (e) {}
+</script>
+</head>
+<body>
+<div class="app">
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <span class="header-spacer" aria-hidden="true"></span>
+      <div class="logo-full">
+        <span class="logo-text" role="img" aria-label="Planfra"></span>
+      </div>
+      <button class="collapse-btn" id="collapseBtn" aria-label="사이드바 접기/펼치기">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 6H20M4 12H20M4 18H14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+
+    <nav class="nav">
+      <ul class="nav-list">
+        <li class="nav-section-label">Navigation</li>
+
+        <li class="nav-item active">
+          <a href="#" class="nav-link" data-page="page-dashboard">
+            <span class="nav-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="13" y="3" width="8" height="5" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="13" y="12" width="8" height="9" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="3" y="15" width="8" height="6" rx="1.5" stroke="currentColor" stroke-width="1.8"/></svg>
+            </span>
+            <span class="nav-label">대시보드</span>
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a href="#" class="nav-link" data-page="page-project">
+            <span class="nav-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M3 9H21" stroke="currentColor" stroke-width="1.8"/><circle cx="6.3" cy="6.5" r="0.9" fill="currentColor"/><circle cx="9.3" cy="6.5" r="0.9" fill="currentColor"/></svg>
+            </span>
+            <span class="nav-label">프로젝트</span>
+          </a>
+        </li>
+
+        <li class="nav-section-label">판매채널</li>
+
+        <li class="nav-item">
+          <a href="#" class="nav-link" data-page="page-allchannels">
+            <span class="nav-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="14" y="3" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="3" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="14" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/></svg>
+            </span>
+            <span class="nav-label">전체판매처</span>
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a href="#" class="nav-link" data-page="page-coupang">
+            <span class="nav-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 8L12 4L21 8L12 12L3 8Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M3 8V16L12 20L21 16V8" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M12 12V20" stroke="currentColor" stroke-width="1.8"/></svg>
+            </span>
+            <span class="nav-label">쿠팡</span>
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a href="#" class="nav-link" data-page="page-ownmall">
+            <span class="nav-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 10V20H20V10" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M2 10L4.5 4H19.5L22 10C22 11.7 20.7 13 19 13C17.3 13 16 11.7 16 10C16 11.7 14.7 13 13 13C11.3 13 10 11.7 10 10C10 11.7 8.7 13 7 13C5.3 13 4 11.7 4 10C4 11.7 2.7 13 2 10Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+            </span>
+            <span class="nav-label">자사몰</span>
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a href="#" class="nav-link" data-page="page-smartstore">
+            <span class="nav-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="16" height="16" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M8 4V20M4 9H20" stroke="currentColor" stroke-width="1.8"/></svg>
+            </span>
+            <span class="nav-label">스마트스토어</span>
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a href="#" class="nav-link" data-page="page-talkdeal">
+            <span class="nav-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 5H20V16H9L5 19.5V16H4V5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+            </span>
+            <span class="nav-label">톡딜</span>
+          </a>
+        </li>
+
+      </ul>
+
+      <div class="sidebar-footer">
+        <label class="theme-toggle" for="themeToggle">
+          <span class="theme-toggle-icon" aria-hidden="true">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+          </span>
+          <span class="nav-label theme-toggle-label">다크 모드</span>
+          <input type="checkbox" class="theme-toggle-input" id="themeToggle">
+          <span class="theme-switch" aria-hidden="true"></span>
+        </label>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- Main -->
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-right">
+        <a href="https://mail.naver.com" target="_blank" rel="noopener" class="icon-btn icon-btn-mail" aria-label="네이버 메일">
+          <svg width="18" height="18" viewBox="0 0 24 24"><rect width="24" height="24" rx="6" fill="#03C75A"/><path d="M6 6H9.7L14.2 13V6H18V18H14.3L9.8 11V18H6V6Z" fill="#fff"/></svg>
+        </a>
+        <a href="https://mail.google.com" target="_blank" rel="noopener" class="icon-btn icon-btn-mail" aria-label="구글 메일">
+          <svg width="18" height="18" viewBox="0 0 24 24"><rect width="24" height="24" rx="6" fill="#fff" stroke="#e3e6ea" stroke-width="1"/><path d="M12 12.6L4.5 7.4V16.8C4.5 17.5 5.1 18 5.8 18H18.2C18.9 18 19.5 17.5 19.5 16.8V7.4L12 12.6Z" fill="#EA4335"/><path d="M19.5 7.4V6.9C19.5 6.1 18.7 5.6 18 6L12 10.2L6 6C5.3 5.6 4.5 6.1 4.5 6.9V7.4L12 12.6L19.5 7.4Z" fill="#4285F4"/></svg>
+        </a>
+        <button type="button" class="icon-btn" id="systemStatusBtn" aria-label="시스템 상태" title="시스템 상태">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/><path d="M19 12C19 12.3 19 12.7 18.9 13L21 14.6L19.5 17.2L17 16.3C16.5 16.7 16 17 15.4 17.2L15 20H12H9L8.6 17.2C8 17 7.5 16.7 7 16.3L4.5 17.2L3 14.6L5.1 13C5.1 12.7 5 12.3 5 12C5 11.7 5.1 11.3 5.1 11L3 9.4L4.5 6.8L7 7.7C7.5 7.3 8 7 8.6 6.8L9 4H15L15.4 6.8C16 7 16.5 7.3 17 7.7L19.5 6.8L21 9.4L18.9 11C19 11.3 19 11.7 19 12Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+          <span class="badge-dot" id="systemStatusDot" hidden></span>
+        </button>
+        <button class="icon-btn">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M18 8C18 6.4 17.4 4.9 16.2 3.8C15.1 2.6 13.6 2 12 2C10.4 2 8.9 2.6 7.8 3.8C6.6 4.9 6 6.4 6 8C6 15 3 17 3 17H21C21 17 18 15 18 8Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M13.7 21C13.5 21.3 13.3 21.6 13 21.7C12.7 21.9 12.3 22 12 22C11.7 22 11.3 21.9 11 21.7C10.7 21.6 10.5 21.3 10.3 21" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <span class="badge-dot"></span>
+        </button>
+        <div class="profile">
+          <div class="avatar">P</div>
+          <span class="profile-name">Planner</span>
+        </div>
+      </div>
+    </header>
+
+    <main class="content">
+      <div id="page-dashboard" class="page">
+      <div class="dashboard-top-row">
+        <div class="stat-panel">
+          <section class="stat-grid" id="taskStatGrid">
+            <div class="stat-card stat-card-clickable" data-stat-filter="overdue" title="마감기한이 지났는데 아직 완료 처리되지 않은 프로젝트 건수입니다.">
+              <div class="stat-icon stat-icon-e">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 7V12L15 14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </div>
+              <div class="stat-info">
+                <span class="stat-label">지연된 프로젝트</span>
+                <span class="stat-value stat-value-danger" id="statOverdueCount">0</span>
+              </div>
+            </div>
+            <div class="stat-card stat-card-clickable" data-stat-filter="urgent" title="우선순위가 '긴급'이고 마감까지 1일 이내(오늘·내일)로 남은 미완료 프로젝트 건수입니다.">
+              <div class="stat-icon stat-icon-c">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M3 9H21M8 2V6M16 2V6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+              </div>
+              <div class="stat-info">
+                <span class="stat-label">긴급 프로젝트</span>
+                <span class="stat-value stat-value-warn" id="statTodayCount">0</span>
+              </div>
+            </div>
+            <div class="stat-card stat-card-clickable" data-stat-filter="soon" title="마감까지 3일 이내(마감 당일 포함, 완료 제외)로 남은 프로젝트 건수입니다.">
+              <div class="stat-icon stat-icon-d">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 2V22M17 6H9.5C8.1 6 7 7.1 7 8.5S8.1 11 9.5 11H14.5C15.9 11 17 12.1 17 13.5S15.9 16 14.5 16H7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+              </div>
+              <div class="stat-info">
+                <span class="stat-label">마감 3일 이내 프로젝트</span>
+                <span class="stat-value" id="statSoonCount">0</span>
+              </div>
+            </div>
+            <div class="stat-card stat-card-clickable" data-stat-filter="incomplete" title="상태가 '완료'가 아닌 전체 프로젝트 건수입니다.">
+              <div class="stat-icon stat-icon-a">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M9 11L12 14L20 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 12V18C20 19.1 19.1 20 18 20H6C4.9 20 4 19.1 4 18V6C4 4.9 4.9 4 6 4H15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+              </div>
+              <div class="stat-info">
+                <span class="stat-label">미완료 프로젝트</span>
+                <span class="stat-value" id="statPendingCount">0</span>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <div class="clock-panel">
+          <div class="flip-clock">
+            <span class="flip-digit" id="clockHH">00</span>
+            <span class="flip-colon">:</span>
+            <span class="flip-digit" id="clockMM">00</span>
+            <span class="flip-colon">:</span>
+            <span class="flip-digit" id="clockSS">00</span>
+            <span class="clock-ampm" id="clockAmPm">AM</span>
+          </div>
+          <div class="clock-date-en" id="clockDateEn"></div>
+        </div>
+      </div>
+
+      <section class="dashboard-work-row">
+        <div class="panel panel-tall quicknote-panel">
+          <div class="panel-header">
+            <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 4H16L20 8V20H4V4Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M16 4V8H20" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 12H16M8 16H13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg> 간편 기록노트</h2>
+          </div>
+          <p class="quicknote-desc">짧은 미팅 기록을 남기는 공간입니다</p>
+          <div class="quicknote-input-row">
+            <textarea id="quickNoteInput" class="quicknote-textarea" rows="2" placeholder="예: 09/03 14:00 OO업체 통화 - 배송 지연 문의, 다음주 재연락 요청 (Ctrl+Enter로 빠르게 추가)"></textarea>
+            <button type="button" class="btn btn-primary quicknote-add-btn" id="quickNoteAddBtn">기록 추가</button>
+          </div>
+          <ul class="quicknote-list" id="quickNoteList"></ul>
+          <div class="quicknote-pagination" id="quickNotePagination">
+            <button type="button" class="quicknote-page-nav" id="quickNotePrevBtn" aria-label="이전 페이지">&#8249;</button>
+            <div class="quicknote-page-numbers" id="quickNotePageNumbers"></div>
+            <button type="button" class="quicknote-page-nav" id="quickNoteNextBtn" aria-label="다음 페이지">&#8250;</button>
+          </div>
+        </div>
+
+        <div class="panel panel-tall dashboard-work-right">
+          <div class="panel-header">
+            <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 20V10M12 20V4M20 20V14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> 진행중인 프로젝트 달성률</h2>
+          </div>
+          <ul class="rank-list" id="projectProgressRankList"></ul>
+        </div>
+      </section>
+
+      </div>
+
+      <div id="page-project" class="page" hidden>
+        <div class="board-header">
+          <div class="board-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 6H20M4 12H20M4 18H14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            <h1>프로젝트</h1>
+            <span class="board-caret">&#9662;</span>
+            <div class="board-search">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20L16.5 16.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              <input type="text" id="boardSearchInput" placeholder="프로젝트 검색...">
+              <button type="button" class="board-search-clear" id="boardSearchClear" hidden aria-label="검색어 지우기">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="board-header-actions">
+            <div class="board-filter-wrap" id="boardFilterWrap">
+              <button type="button" class="btn btn-outline" id="boardFilterBtn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 6H20L14 13V19L10 21V13L4 6Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+                필터
+                <span class="filter-count-badge" id="filterCountBadge" hidden></span>
+              </button>
+              <div class="board-filter-popup" id="boardFilterPopup" hidden>
+                <label class="board-filter-option">
+                  <input type="checkbox" class="board-filter-checkbox" value="예정">
+                  <span class="board-filter-dot" style="background:#6d4aff"></span>예정
+                </label>
+                <label class="board-filter-option">
+                  <input type="checkbox" class="board-filter-checkbox" value="진행중">
+                  <span class="board-filter-dot" style="background:#3b8ef0"></span>진행중
+                </label>
+                <label class="board-filter-option">
+                  <input type="checkbox" class="board-filter-checkbox" value="보류">
+                  <span class="board-filter-dot" style="background:#f0883e"></span>보류
+                </label>
+                <label class="board-filter-option">
+                  <input type="checkbox" class="board-filter-checkbox" value="완료">
+                  <span class="board-filter-dot" style="background:#26b862"></span>완료
+                </label>
+                <div class="board-filter-actions">
+                  <button type="button" class="link-btn" id="filterResetBtn">초기화</button>
+                  <button type="button" class="btn btn-primary btn-sm" id="filterApplyBtn">적용</button>
+                </div>
+              </div>
+            </div>
+            <div class="board-range-wrap" id="boardRangeWrap">
+              <button type="button" class="btn btn-outline board-range-btn" id="boardRangeBtn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M3 9H21M8 2V6M16 2V6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                <span id="boardRangeText">날짜</span>
+              </button>
+              <button type="button" class="board-range-clear" id="boardRangeClear" hidden aria-label="날짜 초기화">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              </button>
+              <div class="board-range-popup" id="boardRangePopup" hidden>
+                <div class="board-range-presets">
+                  <button type="button" class="range-preset" data-range-preset="today">오늘</button>
+                  <button type="button" class="range-preset" data-range-preset="thisMonth">이번 달</button>
+                  <button type="button" class="range-preset" data-range-preset="nextMonth">다음 달</button>
+                  <button type="button" class="range-preset" data-range-preset="next7">앞으로 7일</button>
+                  <button type="button" class="range-preset" data-range-preset="next30">앞으로 30일</button>
+                  <button type="button" class="range-preset range-preset-custom" data-range-custom>범위 선택</button>
+                </div>
+                <div class="board-range-fields">
+                  <button type="button" class="range-field" id="rangeFieldStart" data-range-field="start">
+                    <span class="range-field-label">시작일</span>
+                    <span class="range-field-value is-empty" id="rangeStartValue">선택</span>
+                  </button>
+                  <span class="range-field-sep">~</span>
+                  <button type="button" class="range-field" id="rangeFieldEnd" data-range-field="end">
+                    <span class="range-field-label">종료일</span>
+                    <span class="range-field-value is-empty" id="rangeEndValue">선택</span>
+                  </button>
+                </div>
+                <div class="datepicker-header">
+                  <button type="button" class="datepicker-nav" id="rangePrevMonth" aria-label="이전 달">&#8249;</button>
+                  <span class="datepicker-title" id="rangeMonthLabel"></span>
+                  <button type="button" class="datepicker-nav" id="rangeNextMonth" aria-label="다음 달">&#8250;</button>
+                </div>
+                <div class="datepicker-weekdays">
+                  <span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span>
+                </div>
+                <div class="datepicker-days board-range-days" id="rangeDaysGrid"></div>
+                <div class="board-filter-actions">
+                  <button type="button" class="link-btn" id="rangeResetBtn">초기화</button>
+                  <button type="button" class="btn btn-primary btn-sm" id="rangeApplyBtn">적용</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="board-columns" id="boardColumns"></div>
+      </div>
+
+      <div id="page-allchannels" class="page" hidden>
+        <div class="content-heading channel-heading">
+          <div>
+            <h1>전체판매처</h1>
+            <p>모든 판매채널의 광고 성과와 업무를 한눈에 확인하세요</p>
+          </div>
+          <div class="channel-heading-actions">
+            <div class="channel-range-wrap" data-channel-range-wrap>
+              <button type="button" class="btn btn-outline board-range-btn" data-channel-range-btn>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M3 9H21M8 2V6M16 2V6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                <span data-channel-range-text>전체 기간</span>
+              </button>
+            </div>
+            <div class="channel-view-tabs" role="group" aria-label="전체판매처 보기 전환">
+              <button type="button" class="channel-view-btn is-active" data-channel-view="ad" aria-pressed="true">광고</button>
+            </div>
+          </div>
+        </div>
+        <section class="stat-grid channel-stat-grid" data-channel-stats="allchannels">
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-e">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 10V14H6L14 19V5L6 10H3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M18 9C19 10 19 14 18 15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">광고비</span>
+              <span class="stat-value" data-stat="adCost">0원</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-b">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 20V10M12 20V4M20 20V14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">광고매출</span>
+              <span class="stat-value" data-stat="adRevenue">0원</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-a">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 17L9 11L13 15L21 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 7H21V13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">ROAS</span>
+              <span class="stat-value" data-stat="roas">0%</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-d">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3" y="6" width="18" height="13" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M3 10H21" stroke="currentColor" stroke-width="1.8"/><circle cx="17" cy="14.5" r="1.2" fill="currentColor"/></svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">전체매출</span>
+              <span class="stat-value" data-stat="totalRevenue">0원</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="channel-share-row">
+          <div class="panel channel-share-panel">
+            <div class="panel-header">
+              <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 10V14H6L14 19V5L6 10H3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M18 9C19 10 19 14 18 15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg> 전체채널 광고비 비중</h2>
+              <p>쿠팡·자사몰·스마트스토어·톡딜의 전체광고비 대비 비중입니다</p>
+            </div>
+            <div class="donut-card" id="adCostShareDonut"></div>
+          </div>
+          <div class="panel channel-share-panel">
+            <div class="panel-header">
+              <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 3V12L18 15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> 전체채널 매출 비중</h2>
+              <p>쿠팡·자사몰·스마트스토어·톡딜의 전체매출 대비 비중입니다</p>
+            </div>
+            <div class="donut-card" id="revenueShareDonut"></div>
+          </div>
+        </section>
+      </div>
+
+      <div id="page-coupang" class="page" hidden>
+        <div class="content-heading channel-heading">
+          <div class="channel-heading-text">
+            <h1>쿠팡</h1>
+            <p>쿠팡 채널의 진행중인 프로젝트 달성률을 확인하세요 (프로젝트 페이지와 연동됩니다)</p>
+          </div>
+          <div class="channel-heading-actions">
+          <div class="channel-range-wrap" data-channel-range-wrap>
+            <button type="button" class="btn btn-outline board-range-btn" data-channel-range-btn>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M3 9H21M8 2V6M16 2V6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+              <span data-channel-range-text>전체 기간</span>
+            </button>
+          </div>
+          <div class="channel-view-tabs" role="group" aria-label="쿠팡 보기 전환">
+            <button type="button" class="channel-view-btn is-active" data-channel-view="project" aria-pressed="true">프로젝트</button>
+            <button type="button" class="channel-view-btn" data-channel-view="ad" aria-pressed="false">광고</button>
+          </div>
+          </div>
+        </div>
+        <section class="stat-grid channel-stat-grid" data-channel-stats="coupang">
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-e">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 10V14H6L14 19V5L6 10H3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M18 9C19 10 19 14 18 15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">광고비</span>
+              <span class="stat-value" data-stat="adCost">0원</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-b">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 20V10M12 20V4M20 20V14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">광고매출</span>
+              <span class="stat-value" data-stat="adRevenue">0원</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-a">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 17L9 11L13 15L21 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 7H21V13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">ROAS</span>
+              <span class="stat-value" data-stat="roas">0%</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-d">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3" y="6" width="18" height="13" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M3 10H21" stroke="currentColor" stroke-width="1.8"/><circle cx="17" cy="14.5" r="1.2" fill="currentColor"/></svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">전체매출</span>
+              <span class="stat-value" data-stat="totalRevenue">0원</span>
+            </div>
+          </div>
+        </section>
+        <div class="channel-work-row">
+          <div class="panel channel-rank-panel">
+            <div class="panel-header panel-header-actions">
+              <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 20V10M12 20V4M20 20V14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> 쿠팡 프로젝트 달성률</h2>
+              <button type="button" class="link-btn" data-add-project="진행중" data-add-project-channel="쿠팡">+ 프로젝트 추가</button>
+            </div>
+            <ul class="rank-list" data-channel-rank="coupang"></ul>
+          </div>
+          <aside class="panel deadline-alert-panel">
+            <div class="panel-header panel-header-actions">
+              <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 7V12L15.5 14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> 마감 임박 · 긴급 알림</h2>
+              <span class="deadline-alert-count" data-deadline-alert-count="coupang">0건</span>
+            </div>
+            <ul class="deadline-alert-list" data-deadline-alerts="coupang"></ul>
+          </aside>
+        </div>
+      </div>
+
+      <div id="page-ownmall" class="page" hidden>
+        <div class="content-heading channel-heading">
+          <div class="channel-heading-text">
+            <h1>자사몰</h1>
+            <p>자사몰 채널의 진행중인 프로젝트 달성률을 확인하세요 (프로젝트 페이지와 연동됩니다)</p>
+          </div>
+          <div class="channel-heading-actions">
+          <div class="channel-range-wrap" data-channel-range-wrap>
+            <button type="button" class="btn btn-outline board-range-btn" data-channel-range-btn>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M3 9H21M8 2V6M16 2V6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+              <span data-channel-range-text>전체 기간</span>
+            </button>
+          </div>
+          <div class="channel-view-tabs" role="group" aria-label="자사몰 보기 전환">
+            <button type="button" class="channel-view-btn is-active" data-channel-view="project" aria-pressed="true">프로젝트</button>
+            <button type="button" class="channel-view-btn" data-channel-view="ad" aria-pressed="false">광고</button>
+          </div>
+          </div>
+        </div>
+        <section class="stat-grid channel-stat-grid" data-channel-stats="ownmall">
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-e">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 10V14H6L14 19V5L6 10H3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M18 9C19 10 19 14 18 15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">광고비</span>
+              <span class="stat-value" data-stat="adCost">0원</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-b">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 20V10M12 20V4M20 20V14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">광고매출</span>
+              <span class="stat-value" data-stat="adRevenue">0원</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-a">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 17L9 11L13 15L21 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 7H21V13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">ROAS</span>
+              <span class="stat-value" data-stat="roas">0%</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-d">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3" y="6" width="18" height="13" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M3 10H21" stroke="currentColor" stroke-width="1.8"/><circle cx="17" cy="14.5" r="1.2" fill="currentColor"/></svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">전체매출</span>
+              <span class="stat-value" data-stat="totalRevenue">0원</span>
+            </div>
+          </div>
+        </section>
+        <div class="channel-work-row">
+          <div class="panel channel-rank-panel">
+            <div class="panel-header panel-header-actions">
+              <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 20V10M12 20V4M20 20V14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> 자사몰 프로젝트 달성률</h2>
+              <button type="button" class="link-btn" data-add-project="진행중" data-add-project-channel="자사몰">+ 프로젝트 추가</button>
+            </div>
+            <ul class="rank-list" data-channel-rank="ownmall"></ul>
+          </div>
+          <aside class="panel deadline-alert-panel">
+            <div class="panel-header panel-header-actions">
+              <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 7V12L15.5 14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> 마감 임박 · 긴급 알림</h2>
+              <span class="deadline-alert-count" data-deadline-alert-count="ownmall">0건</span>
+            </div>
+            <ul class="deadline-alert-list" data-deadline-alerts="ownmall"></ul>
+          </aside>
+        </div>
+      </div>
+
+      <div id="page-smartstore" class="page" hidden>
+        <div class="content-heading channel-heading">
+          <div class="channel-heading-text">
+            <h1>스마트스토어</h1>
+            <p>스마트스토어 채널의 진행중인 프로젝트 달성률을 확인하세요 (프로젝트 페이지와 연동됩니다)</p>
+          </div>
+          <div class="channel-heading-actions">
+          <div class="channel-range-wrap" data-channel-range-wrap>
+            <button type="button" class="btn btn-outline board-range-btn" data-channel-range-btn>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M3 9H21M8 2V6M16 2V6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+              <span data-channel-range-text>전체 기간</span>
+            </button>
+          </div>
+          <div class="channel-view-tabs" role="group" aria-label="스마트스토어 보기 전환">
+            <button type="button" class="channel-view-btn is-active" data-channel-view="project" aria-pressed="true">프로젝트</button>
+            <button type="button" class="channel-view-btn" data-channel-view="ad" aria-pressed="false">광고</button>
+          </div>
+          </div>
+        </div>
+        <section class="stat-grid channel-stat-grid" data-channel-stats="smartstore">
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-e">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 10V14H6L14 19V5L6 10H3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M18 9C19 10 19 14 18 15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">광고비</span>
+              <span class="stat-value" data-stat="adCost">0원</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-b">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 20V10M12 20V4M20 20V14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">광고매출</span>
+              <span class="stat-value" data-stat="adRevenue">0원</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-a">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 17L9 11L13 15L21 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 7H21V13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">ROAS</span>
+              <span class="stat-value" data-stat="roas">0%</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-d">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3" y="6" width="18" height="13" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M3 10H21" stroke="currentColor" stroke-width="1.8"/><circle cx="17" cy="14.5" r="1.2" fill="currentColor"/></svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">전체매출</span>
+              <span class="stat-value" data-stat="totalRevenue">0원</span>
+            </div>
+          </div>
+        </section>
+        <div class="channel-work-row">
+          <div class="panel channel-rank-panel">
+            <div class="panel-header panel-header-actions">
+              <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 20V10M12 20V4M20 20V14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> 스마트스토어 프로젝트 달성률</h2>
+              <button type="button" class="link-btn" data-add-project="진행중" data-add-project-channel="스마트스토어">+ 프로젝트 추가</button>
+            </div>
+            <ul class="rank-list" data-channel-rank="smartstore"></ul>
+          </div>
+          <aside class="panel deadline-alert-panel">
+            <div class="panel-header panel-header-actions">
+              <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 7V12L15.5 14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> 마감 임박 · 긴급 알림</h2>
+              <span class="deadline-alert-count" data-deadline-alert-count="smartstore">0건</span>
+            </div>
+            <ul class="deadline-alert-list" data-deadline-alerts="smartstore"></ul>
+          </aside>
+        </div>
+      </div>
+
+      <div id="page-talkdeal" class="page" hidden>
+        <div class="content-heading channel-heading">
+          <div class="channel-heading-text">
+            <h1>톡딜</h1>
+            <p>톡딜 채널의 진행중인 프로젝트 달성률을 확인하세요 (프로젝트 페이지와 연동됩니다)</p>
+          </div>
+          <div class="channel-heading-actions">
+          <div class="channel-range-wrap" data-channel-range-wrap>
+            <button type="button" class="btn btn-outline board-range-btn" data-channel-range-btn>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M3 9H21M8 2V6M16 2V6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+              <span data-channel-range-text>전체 기간</span>
+            </button>
+          </div>
+          <div class="channel-view-tabs" role="group" aria-label="톡딜 보기 전환">
+            <button type="button" class="channel-view-btn is-active" data-channel-view="project" aria-pressed="true">프로젝트</button>
+            <button type="button" class="channel-view-btn" data-channel-view="ad" aria-pressed="false">광고</button>
+          </div>
+          </div>
+        </div>
+        <section class="stat-grid channel-stat-grid" data-channel-stats="talkdeal">
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-e">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 10V14H6L14 19V5L6 10H3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M18 9C19 10 19 14 18 15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">광고비</span>
+              <span class="stat-value" data-stat="adCost">0원</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-b">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 20V10M12 20V4M20 20V14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">광고매출</span>
+              <span class="stat-value" data-stat="adRevenue">0원</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-a">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 17L9 11L13 15L21 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 7H21V13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">ROAS</span>
+              <span class="stat-value" data-stat="roas">0%</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon stat-icon-d">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3" y="6" width="18" height="13" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M3 10H21" stroke="currentColor" stroke-width="1.8"/><circle cx="17" cy="14.5" r="1.2" fill="currentColor"/></svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">전체매출</span>
+              <span class="stat-value" data-stat="totalRevenue">0원</span>
+            </div>
+          </div>
+        </section>
+        <div class="channel-work-row">
+          <div class="panel channel-rank-panel">
+            <div class="panel-header panel-header-actions">
+              <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 20V10M12 20V4M20 20V14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> 톡딜 프로젝트 달성률</h2>
+              <button type="button" class="link-btn" data-add-project="진행중" data-add-project-channel="톡딜">+ 프로젝트 추가</button>
+            </div>
+            <ul class="rank-list" data-channel-rank="talkdeal"></ul>
+          </div>
+          <aside class="panel deadline-alert-panel">
+            <div class="panel-header panel-header-actions">
+              <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 7V12L15.5 14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> 마감 임박 · 긴급 알림</h2>
+              <span class="deadline-alert-count" data-deadline-alert-count="talkdeal">0건</span>
+            </div>
+            <ul class="deadline-alert-list" data-deadline-alerts="talkdeal"></ul>
+          </aside>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<div class="stat-popover" id="statPopover" hidden>
+  <div class="stat-popover-header">
+    <div class="stat-popover-header-text">
+      <span class="stat-popover-title" id="statPopoverTitle"></span>
+      <p class="stat-popover-desc" id="statPopoverDesc"></p>
+    </div>
+    <button type="button" class="stat-popover-close" id="statPopoverClose" aria-label="닫기">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+  <ul class="stat-popover-list" id="statPopoverList"></ul>
+</div>
+
+<div class="modal-overlay" id="taskModalOverlay" hidden>
+  <div class="modal">
+    <div class="modal-titlebar">
+      <span class="modal-title-icon">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M21.17 6.81a1 1 0 0 0-3.99-3.99L3.84 16.17a2 2 0 0 0-.5.83l-1.32 4.35a.5.5 0 0 0 .62.62l4.35-1.32a2 2 0 0 0 .83-.5Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 5l4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </span>
+      <span class="modal-title-text">업무 추가</span>
+      <div class="modal-winctrls">
+        <button type="button" class="winctrl winctrl-close" id="taskModalClose" aria-label="닫기">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div class="modal-row">
+        <label class="modal-label">채널</label>
+        <select class="modal-select" id="taskChannelSelect">
+          <option value="coupang">쿠팡</option>
+          <option value="ownmall">자사몰</option>
+          <option value="smartstore">스마트스토어</option>
+          <option value="talkdeal">톡딜</option>
+        </select>
+      </div>
+      <div class="modal-row">
+        <label class="modal-label"><span class="req-badge">필수</span>제목</label>
+        <input type="text" class="modal-input" id="taskTitleInput" placeholder="예: 상세페이지 수정">
+      </div>
+      <div class="modal-row">
+        <label class="modal-label">마감일</label>
+        <input type="date" class="modal-input" id="taskDueInput">
+      </div>
+      <div class="modal-row">
+        <label class="modal-label">메모</label>
+        <input type="text" class="modal-input" id="taskMemoInput">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <div class="modal-footer-left"></div>
+      <div class="modal-footer-right">
+        <button type="button" class="btn btn-primary" id="taskConfirm">저장</button>
+        <button type="button" class="btn btn-plain" id="taskCancel">취소</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="projectModalOverlay" hidden>
+  <div class="modal modal-wide">
+    <div class="modal-titlebar">
+      <span class="modal-title-icon">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M21.17 6.81a1 1 0 0 0-3.99-3.99L3.84 16.17a2 2 0 0 0-.5.83l-1.32 4.35a.5.5 0 0 0 .62.62l4.35-1.32a2 2 0 0 0 .83-.5Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 5l4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </span>
+      <span class="modal-title-text" id="projectModalTitleText">프로젝트 추가</span>
+      <div class="modal-winctrls">
+        <button type="button" class="winctrl winctrl-close" id="projectModalClose" aria-label="닫기">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="modal-body">
+      <input type="text" class="modal-title-input" id="projectTitleInput" placeholder="제목을 입력하세요">
+      <div class="modal-body-split">
+      <div class="modal-note-col">
+        <div class="modal-textarea" id="projectNoteInput" contenteditable="true" data-placeholder="이 프로젝트에 대해 자유롭게 기록해보세요&#10;(링크를 붙여넣으면 클릭 가능한 링크가 됩니다)"></div>
+      </div>
+      <div class="modal-fields-col">
+        <div class="modal-row">
+          <label class="modal-label">마감기한</label>
+          <div class="datepicker" id="projectDuePicker">
+            <button type="button" class="datepicker-input" id="projectDueBtn">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M3 9H21M8 2V6M16 2V6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+              <span id="projectDueText">날짜 선택</span>
+            </button>
+            <div class="datepicker-popup" id="projectDuePopup" hidden>
+              <div class="datepicker-header">
+                <button type="button" class="datepicker-nav" id="dpPrevMonth" aria-label="이전 달">&#8249;</button>
+                <span class="datepicker-title" id="dpMonthLabel"></span>
+                <button type="button" class="datepicker-nav" id="dpNextMonth" aria-label="다음 달">&#8250;</button>
+              </div>
+              <div class="datepicker-weekdays">
+                <span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span>
+              </div>
+              <div class="datepicker-days" id="dpDaysGrid"></div>
+              <div class="datepicker-footer">
+                <button type="button" class="datepicker-footer-btn" id="dpTodayBtn">오늘</button>
+                <button type="button" class="datepicker-footer-btn" id="dpClearBtn">지우기</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-row">
+          <label class="modal-label">태그</label>
+          <input type="text" class="modal-input" id="projectTagsInput" placeholder="쉼표로 구분 (예: 촬영, 신제품)">
+        </div>
+        <div class="modal-row">
+          <label class="modal-label">상태</label>
+          <select class="modal-select" id="projectStatusInput">
+            <option value="예정">예정</option>
+            <option value="진행중">진행중</option>
+            <option value="보류">보류</option>
+            <option value="완료">완료</option>
+          </select>
+        </div>
+        <div class="modal-row">
+          <label class="modal-label">우선순위</label>
+          <select class="modal-select" id="projectPriorityInput">
+            <option value="낮음">낮음</option>
+            <option value="보통" selected>보통</option>
+            <option value="긴급">긴급</option>
+          </select>
+        </div>
+        <div class="modal-row">
+          <label class="modal-label">판매처</label>
+          <select class="modal-select" id="projectChannelInput">
+            <option value="쿠팡">쿠팡</option>
+            <option value="자사몰">자사몰</option>
+            <option value="스마트스토어">스마트스토어</option>
+            <option value="톡딜">톡딜</option>
+          </select>
+        </div>
+        <div class="modal-row">
+          <label class="modal-label">진행도</label>
+          <div class="progress-input-wrap">
+            <input type="range" min="0" max="100" step="5" value="0" class="progress-slider" id="projectProgressInput">
+            <span class="progress-value" id="projectProgressValue">0%</span>
+          </div>
+        </div>
+      </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="systemModalOverlay" hidden>
+  <div class="modal sys-modal" role="dialog" aria-modal="true" aria-labelledby="sysModalTitle">
+    <div class="sys-modal-header">
+      <span class="sys-dot sys-dot-live" aria-hidden="true"></span>
+      <h2 class="sys-modal-title" id="sysModalTitle">시스템 상태</h2>
+      <button type="button" class="sys-modal-close" id="systemModalClose" aria-label="닫기">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="sys-modal-body">
+      <div class="sys-summary" id="sysSummary">
+        <div class="sys-summary-card">
+          <span class="sys-summary-label">API 연결</span>
+          <span class="sys-summary-value" id="sysMetaApi">연결됨</span>
+        </div>
+        <div class="sys-summary-card">
+          <span class="sys-summary-label">마지막 수집</span>
+          <span class="sys-summary-value" id="sysMetaCollected">—</span>
+        </div>
+        <div class="sys-summary-card">
+          <span class="sys-summary-label">전체 워크플로우</span>
+          <span class="sys-summary-value" id="sysMetaTotal">0개</span>
+        </div>
+        <div class="sys-summary-card" id="sysMetaAlertCard">
+          <span class="sys-summary-label">주의 필요</span>
+          <span class="sys-summary-value" id="sysMetaAlert">0개</span>
+        </div>
+      </div>
+
+      <div class="sys-toolbar">
+        <h3 class="sys-toolbar-title">워크플로우</h3>
+        <div class="sys-view-tabs" role="group" aria-label="워크플로우 상태 필터" id="sysViewTabs">
+          <button type="button" class="channel-view-btn is-active" data-sys-filter="all" aria-pressed="true">전체</button>
+          <button type="button" class="channel-view-btn" data-sys-filter="ok" aria-pressed="false">정상</button>
+          <button type="button" class="channel-view-btn" data-sys-filter="alert" aria-pressed="false">주의</button>
+        </div>
+      </div>
+
+      <div class="sys-table">
+        <div class="sys-table-head">
+          <span>워크플로우</span>
+          <span>스케줄</span>
+          <span>최근 실행</span>
+          <span class="sys-col-state">상태</span>
+        </div>
+        <div class="sys-table-body" id="sysTableBody"></div>
+        <p class="sys-empty" id="sysEmptyState" hidden>해당하는 워크플로우가 없습니다.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<button type="button" class="consult-fab" id="consultFabBtn" aria-haspopup="dialog" aria-expanded="false" aria-controls="consultModalOverlay" aria-label="상담 콘솔 열기">
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 5H20V16H9L5 19.5V16H4V5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 9.5H16M8 12.5H13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+</button>
+
+<div class="modal-overlay" id="consultModalOverlay" hidden>
+  <div class="modal modal-wide consult-modal" role="dialog" aria-modal="true" aria-labelledby="consultModalTitleText">
+    <div class="modal-titlebar">
+      <span class="modal-title-icon">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 5H20V16H9L5 19.5V16H4V5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 9.5H16M8 12.5H13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </span>
+      <span class="modal-title-text" id="consultModalTitleText">상담 콘솔</span>
+      <div class="modal-winctrls">
+        <button type="button" class="ch-btn consult-manual-open-btn" id="openManualBtn">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M4 4H16L20 8V20H4V4Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M16 4V8H20" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 12H16M8 16H13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          매뉴얼 관리
+        </button>
+        <button type="button" class="winctrl winctrl-close" id="consultModalClose" aria-label="닫기">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="modal-body consult-modal-body">
+      <div class="consult-note-section consult-fields-section consult-box">
+        <span class="consult-section-label">① 고객 정보</span>
+        <div class="consult-customer-fields">
+          <div class="consult-field-group consult-field-narrow consult-field-phone">
+            <label class="consult-field-label" for="consultPhoneInput">연락처</label>
+            <input type="text" class="modal-input" id="consultPhoneInput" placeholder="010-1234-5678">
+          </div>
+          <div class="consult-field-group consult-field-narrow">
+            <label class="consult-field-label" for="consultNameInput">고객명</label>
+            <input type="text" class="modal-input" id="consultNameInput" placeholder="홍길동">
+          </div>
+          <div class="consult-field-group consult-field-narrow">
+            <label class="consult-field-label" for="consultChannelInput">구매처</label>
+            <select class="modal-select" id="consultChannelInput">
+              <option value="">선택</option>
+              <option value="쿠팡">쿠팡</option>
+              <option value="자사몰">자사몰</option>
+              <option value="스마트스토어">스마트스토어</option>
+              <option value="톡딜">톡딜</option>
+              <option value="기타">기타</option>
+            </select>
+          </div>
+          <div class="consult-field-group">
+            <label class="consult-field-label" for="consultOrderNoInput">주문번호</label>
+            <input type="text" class="modal-input" id="consultOrderNoInput" placeholder="예: 20260904-0001">
+          </div>
+          <div class="consult-field-group">
+            <label class="consult-field-label" for="consultInvoiceNoInput">송장번호</label>
+            <input type="text" class="modal-input" id="consultInvoiceNoInput" placeholder="택배사 송장번호">
+          </div>
+          <div class="consult-field-group consult-field-narrow consult-field-action">
+            <span class="consult-field-label consult-field-label-ghost">&nbsp;</span>
+            <button type="button" class="btn btn-primary consult-add-record-btn" id="consultAddRecordBtn">추가하기</button>
+          </div>
+        </div>
+        <div class="consult-record-actions">
+          <span class="consult-customer-status" id="consultCustomerStatus"></span>
+        </div>
+      </div>
+
+      <div class="consult-main-row">
+        <div class="consult-left-col">
+          <div class="consult-note-col consult-box">
+            <label class="consult-section-label" for="consultRecordInput">② 상담 내용 — 고객이 하는 말을 그대로 들으며 기록하세요</label>
+            <textarea class="consult-record-textarea consult-record-textarea-main" id="consultRecordInput" rows="4" placeholder="예: 주문한 냉동 제품이 배송 중 다 녹아서 왔다고 하심 (입력하는 대로 오른쪽 답변가이드에 추천 답변이 표시됩니다)"></textarea>
+          </div>
+          <div class="consult-col consult-history-col consult-box">
+            <div class="consult-col-header">
+              <h3>상담이력</h3>
+              <div class="consult-col-header-right">
+                <span class="consult-count-badge" id="consultHistoryCount">0건</span>
+                <button type="button" class="btn btn-primary consult-search-btn" id="consultSearchBtn">조회</button>
+              </div>
+            </div>
+            <ul class="consult-history-list" id="consultHistoryList">
+              <li class="consult-history-empty">전화번호를 입력하고 조회해주세요</li>
+            </ul>
+          </div>
+        </div>
+        <div class="consult-col consult-ai-col consult-box">
+          <div class="consult-col-header">
+            <h3>답변가이드</h3>
+            <span class="consult-count-badge" id="consultAiCount">0건</span>
+          </div>
+          <ul class="consult-ai-list" id="consultAiList">
+            <li class="consult-ai-empty">왼쪽에 상담 내용을 입력하면<br>일치하는 매뉴얼 답변을 추천합니다</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="manualModalOverlay" hidden>
+  <div class="modal modal-wide" role="dialog" aria-modal="true" aria-labelledby="manualModalTitleText">
+    <div class="modal-titlebar">
+      <span class="modal-title-icon">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 4H16L20 8V20H4V4Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M16 4V8H20" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 12H16M8 16H13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </span>
+      <span class="modal-title-text" id="manualModalTitleText">매뉴얼 관리</span>
+      <div class="modal-winctrls">
+        <button type="button" class="winctrl winctrl-close" id="manualModalClose" aria-label="닫기">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="manualEditId">
+      <div class="modal-row">
+        <label class="modal-label">제목</label>
+        <input type="text" class="modal-input" id="manualTitleInput" placeholder="예: 배송 지연 문의">
+      </div>
+      <div class="modal-row">
+        <label class="modal-label">키워드</label>
+        <input type="text" class="modal-input" id="manualKeywordsInput" placeholder="쉼표로 구분 (예: 배송, 지연, 언제 와요)">
+      </div>
+      <div class="modal-row">
+        <label class="modal-label">답변내용</label>
+        <textarea class="modal-textarea manual-answer-textarea" id="manualAnswerInput" placeholder="고객에게 안내할 답변을 입력하세요"></textarea>
+      </div>
+      <div class="modal-row manual-form-actions">
+        <label class="modal-label"></label>
+        <div class="manual-form-buttons">
+          <button type="button" class="btn btn-primary" id="manualSaveBtn">저장</button>
+          <button type="button" class="btn btn-plain" id="manualCancelEditBtn" hidden>취소</button>
+        </div>
+      </div>
+
+      <div class="manual-list-wrap">
+        <div class="consult-col-header">
+          <h3>등록된 매뉴얼</h3>
+          <span class="consult-count-badge" id="manualListCount">0건</span>
+        </div>
+        <ul class="manual-list" id="manualList"></ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="board-range-popup" id="channelRangePopup" hidden>
+  <div class="board-range-presets">
+    <button type="button" class="range-preset" data-crange-preset="today">당일</button>
+    <button type="button" class="range-preset" data-crange-preset="thisMonth">이번달</button>
+    <button type="button" class="range-preset range-preset-custom" data-crange-custom>기간선택</button>
+  </div>
+  <div class="board-range-fields">
+    <button type="button" class="range-field" id="cRangeFieldStart" data-crange-field="start">
+      <span class="range-field-label">시작일</span>
+      <span class="range-field-value is-empty" id="cRangeStartValue">선택</span>
+    </button>
+    <span class="range-field-sep">~</span>
+    <button type="button" class="range-field" id="cRangeFieldEnd" data-crange-field="end">
+      <span class="range-field-label">종료일</span>
+      <span class="range-field-value is-empty" id="cRangeEndValue">선택</span>
+    </button>
+  </div>
+  <div class="datepicker-header">
+    <button type="button" class="datepicker-nav" id="cRangePrevMonth" aria-label="이전 달">&#8249;</button>
+    <span class="datepicker-title" id="cRangeMonthLabel"></span>
+    <button type="button" class="datepicker-nav" id="cRangeNextMonth" aria-label="다음 달">&#8250;</button>
+  </div>
+  <div class="datepicker-weekdays">
+    <span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span>
+  </div>
+  <div class="datepicker-days board-range-days" id="cRangeDaysGrid"></div>
+  <div class="board-filter-actions">
+    <button type="button" class="link-btn" id="cRangeResetBtn">초기화</button>
+    <button type="button" class="btn btn-primary btn-sm" id="cRangeApplyBtn">적용</button>
+  </div>
+</div>
+
+<script src="js/script.js"></script>
+</body>
+</html>
