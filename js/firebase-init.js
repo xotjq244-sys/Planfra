@@ -51,15 +51,18 @@ window.__planfraAuthDenied = function (attemptedEmail) {
   showLoginGate(`접근 권한이 없는 계정입니다 (${attemptedEmail}). 관리자에게 문의하세요.`);
 };
 
+// GitHub Pages는 Cross-Origin-Opener-Policy 헤더를 기본으로 붙이는데, 이게
+// Firebase의 signInWithPopup 창 감지(window.closed 체크)를 막아 팝업이
+// 로그인 없이 그냥 닫혀버리는 문제가 있다. 그래서 팝업 대신 리디렉션 방식을 쓴다.
 googleSignInBtn.addEventListener("click", () => {
   const provider = new firebase.auth.GoogleAuthProvider();
-  auth.signInWithPopup(provider).catch((err) => {
-    if (err.code === "auth/popup-blocked" || err.code === "auth/operation-not-supported-in-this-environment") {
-      auth.signInWithRedirect(provider);
-      return;
-    }
+  auth.signInWithRedirect(provider).catch((err) => {
     showLoginGate("로그인 실패: " + err.message);
   });
+});
+
+auth.getRedirectResult().catch((err) => {
+  showLoginGate("로그인 실패: " + err.message);
 });
 
 auth.onAuthStateChanged((user) => {
