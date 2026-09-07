@@ -50,7 +50,12 @@ function showLoginGate(message) {
   localStorage.removeItem(AUTH_HINT_KEY);
 }
 
-if (localStorage.getItem(AUTH_HINT_KEY) === "1") {
+// 로컬(localhost)에서 VS Code Live Server 등으로 열었을 때는 로그인 절차 없이
+// 바로 화면을 보여준다 — localhost는 외부에서 접근 불가능하니 안전하다.
+// (단, 이 경우 실제 Firestore 데이터는 로그인 전까지 안 뜨고 캐시된 값만 보인다.)
+const isLocalDev = ["localhost", "127.0.0.1"].includes(location.hostname);
+
+if (isLocalDev || localStorage.getItem(AUTH_HINT_KEY) === "1") {
   showAppRoot();
 }
 
@@ -81,7 +86,7 @@ auth.getRedirectResult().catch((err) => {
 
 auth.onAuthStateChanged((user) => {
   if (!user) {
-    showLoginGate();
+    if (!isLocalDev) showLoginGate();
     if (window.detachRealtimeSync) window.detachRealtimeSync();
     return;
   }
