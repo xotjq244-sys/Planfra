@@ -719,18 +719,18 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   }
 
-  // ---- 진행중인 프로젝트 달성률: 진행중 프로젝트를 달성률(progress) 높은 순으로 최대 5개 노출 ----
-  function renderProjectRankList(listEl, projectsList) {
+  // ---- 프로젝트 달성률: 지정된 상태의 프로젝트를 달성률(progress) 높은 순으로 최대 5개 노출 ----
+  function renderProjectRankList(listEl, projectsList, statuses = ["진행중"], emptyText = "진행중인 프로젝트가 없습니다") {
     if (!listEl) return;
 
     const ranked = projectsList
-      .filter((p) => (p.status || "진행중") === "진행중")
+      .filter((p) => statuses.includes(p.status || "진행중"))
       .slice()
       .sort((a, b) => (b.progress || 0) - (a.progress || 0))
       .slice(0, 5);
 
     if (!ranked.length) {
-      listEl.innerHTML = `<li class="task-empty">진행중인 프로젝트가 없습니다</li>`;
+      listEl.innerHTML = `<li class="task-empty">${emptyText}</li>`;
       return;
     }
 
@@ -885,9 +885,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const nextBtn = document.getElementById("quickNoteNextBtn");
     if (!paginationEl || !numbersEl || !prevBtn || !nextBtn) return;
 
-    // 페이지가 1개뿐이어도 이전/다음 영역의 높이는 항상 확보해 레이아웃이 흔들리지 않게 한다
+    // 페이지가 1개뿐이어도 "1" 페이지 번호를 항상 보여줘 레이아웃과 표시가 흔들리지 않게 한다
     const pageCount = Math.max(totalPages, 1);
-    paginationEl.classList.toggle("is-inactive", totalPages <= 1);
     numbersEl.innerHTML = Array.from({ length: pageCount }, (_, i) => i + 1)
       .map(
         (p) =>
@@ -897,6 +896,8 @@ document.addEventListener("DOMContentLoaded", () => {
     prevBtn.disabled = quickNotePage <= 1;
     nextBtn.disabled = quickNotePage >= pageCount;
   }
+
+  let quickNoteEditingId = null;
 
   function renderQuickNotes() {
     const listEl = document.getElementById("quickNoteList");
@@ -915,19 +916,42 @@ document.addEventListener("DOMContentLoaded", () => {
     const pageItems = sorted.slice(start, start + QUICKNOTE_PAGE_SIZE);
 
     listEl.innerHTML = pageItems
-      .map(
-        (n) => `
+      .map((n) => {
+        if (n.id === quickNoteEditingId) {
+          return `
+      <li class="quicknote-item is-editing" data-note-id="${n.id}">
+        <div class="quicknote-item-body">
+          <span class="quicknote-item-time">${formatQuickNoteTime(n.createdAt)}</span>
+          <textarea class="quicknote-edit-textarea" data-edit-note-input="${n.id}">${escapeHtml(n.text)}</textarea>
+        </div>
+        <div class="quicknote-item-actions">
+          <button type="button" class="quicknote-item-save" data-save-note="${n.id}" title="저장">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M5 13L9 17L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <button type="button" class="quicknote-item-cancel" data-cancel-note-edit="${n.id}" title="취소">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+      </li>
+    `;
+        }
+        return `
       <li class="quicknote-item" data-note-id="${n.id}">
         <div class="quicknote-item-body">
           <span class="quicknote-item-time">${formatQuickNoteTime(n.createdAt)}</span>
           <div class="quicknote-item-text">${escapeHtml(n.text)}</div>
         </div>
-        <button type="button" class="quicknote-item-delete" data-delete-note="${n.id}" title="삭제">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-        </button>
+        <div class="quicknote-item-actions">
+          <button type="button" class="quicknote-item-edit" data-edit-note="${n.id}" title="수정">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4L16.5 3.5z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <button type="button" class="quicknote-item-delete" data-delete-note="${n.id}" title="삭제">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          </button>
+        </div>
       </li>
-    `
-      )
+    `;
+      })
       .join("");
 
     renderQuickNotePagination(totalPages);
@@ -944,6 +968,15 @@ document.addEventListener("DOMContentLoaded", () => {
     saveQuickNotes();
     quickNotePage = 1;
     renderQuickNotes();
+  }
+
+  function updateQuickNote(id, text) {
+    const trimmed = text.trim();
+    if (!trimmed) return;
+    const note = quickNotes.find((n) => n.id === id);
+    if (!note) return;
+    note.text = trimmed;
+    saveQuickNotes();
   }
 
   function deleteQuickNote(id) {
@@ -974,9 +1007,47 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (quickNoteList) {
     quickNoteList.addEventListener("click", (e) => {
+      const editBtn = e.target.closest("[data-edit-note]");
+      if (editBtn) {
+        quickNoteEditingId = editBtn.dataset.editNote;
+        renderQuickNotes();
+        return;
+      }
+
+      const saveBtn = e.target.closest("[data-save-note]");
+      if (saveBtn) {
+        const id = saveBtn.dataset.saveNote;
+        const textarea = quickNoteList.querySelector(`[data-edit-note-input="${id}"]`);
+        if (textarea) updateQuickNote(id, textarea.value);
+        quickNoteEditingId = null;
+        renderQuickNotes();
+        return;
+      }
+
+      const cancelBtn = e.target.closest("[data-cancel-note-edit]");
+      if (cancelBtn) {
+        quickNoteEditingId = null;
+        renderQuickNotes();
+        return;
+      }
+
       const delBtn = e.target.closest("[data-delete-note]");
       if (!delBtn) return;
       deleteQuickNote(delBtn.dataset.deleteNote);
+    });
+
+    quickNoteList.addEventListener("keydown", (e) => {
+      const textarea = e.target.closest("[data-edit-note-input]");
+      if (!textarea) return;
+      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+        e.preventDefault();
+        updateQuickNote(textarea.dataset.editNoteInput, textarea.value);
+        quickNoteEditingId = null;
+        renderQuickNotes();
+      } else if (e.key === "Escape") {
+        quickNoteEditingId = null;
+        renderQuickNotes();
+      }
     });
   }
 
@@ -1008,6 +1079,148 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   renderQuickNotes();
+
+  // ---------- Channel Notes (판매처 기록노트: 판매채널 대시보드별 간편 기록) ----------
+  const CHANNEL_NOTES_STORAGE_KEY = "planfra_channel_notes";
+  const CHANNEL_NOTE_PAGE_SIZE = 5;
+
+  function loadChannelNotes() {
+    try {
+      return JSON.parse(localStorage.getItem(CHANNEL_NOTES_STORAGE_KEY)) || [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveChannelNotes() {
+    localStorage.setItem(CHANNEL_NOTES_STORAGE_KEY, JSON.stringify(channelNotes));
+    if (window.db) window.db.collection("boardData").doc("channelNotes").set({ list: channelNotes }).catch((e) => console.error("saveChannelNotes sync failed", e));
+  }
+
+  let channelNotes = loadChannelNotes();
+  const channelNotePages = Object.keys(CHANNEL_LABELS).reduce((acc, key) => {
+    acc[key] = 1;
+    return acc;
+  }, {});
+  let channelNoteEditingId = null;
+
+  function renderChannelNotePagination(channel, totalPages) {
+    const paginationEl = document.querySelector(`[data-channel-note-pagination="${channel}"]`);
+    const numbersEl = document.querySelector(`[data-channel-note-page-numbers="${channel}"]`);
+    const prevBtn = document.querySelector(`[data-channel-note-prev="${channel}"]`);
+    const nextBtn = document.querySelector(`[data-channel-note-next="${channel}"]`);
+    if (!paginationEl || !numbersEl || !prevBtn || !nextBtn) return;
+
+    const page = channelNotePages[channel] || 1;
+    const pageCount = Math.max(totalPages, 1);
+    numbersEl.innerHTML = Array.from({ length: pageCount }, (_, i) => i + 1)
+      .map(
+        (p) =>
+          `<button type="button" class="quicknote-page-btn${p === page ? " is-active" : ""}" data-channel-note-page="${channel}" data-page-num="${p}">${p}</button>`
+      )
+      .join("");
+    prevBtn.disabled = page <= 1;
+    nextBtn.disabled = page >= pageCount;
+  }
+
+  function renderChannelNotes(channel) {
+    const listEl = document.querySelector(`[data-channel-note-list="${channel}"]`);
+    if (!listEl) return;
+
+    const notes = channelNotes.filter((n) => n.channel === channel);
+    if (!notes.length) {
+      listEl.innerHTML = `<li class="quicknote-empty">기록된 노트가 없습니다</li>`;
+      renderChannelNotePagination(channel, 0);
+      return;
+    }
+
+    const sorted = notes.slice().sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    const totalPages = Math.max(1, Math.ceil(sorted.length / CHANNEL_NOTE_PAGE_SIZE));
+    let page = channelNotePages[channel] || 1;
+    if (page > totalPages) page = totalPages;
+    if (page < 1) page = 1;
+    channelNotePages[channel] = page;
+
+    const start = (page - 1) * CHANNEL_NOTE_PAGE_SIZE;
+    const pageItems = sorted.slice(start, start + CHANNEL_NOTE_PAGE_SIZE);
+
+    listEl.innerHTML = pageItems
+      .map((n) => {
+        if (n.id === channelNoteEditingId) {
+          return `
+      <li class="quicknote-item is-editing" data-note-id="${n.id}">
+        <div class="quicknote-item-body">
+          <span class="quicknote-item-time">${formatQuickNoteTime(n.createdAt)}</span>
+          <textarea class="quicknote-edit-textarea" data-edit-channel-note-input="${n.id}">${escapeHtml(n.text)}</textarea>
+        </div>
+        <div class="quicknote-item-actions">
+          <button type="button" class="quicknote-item-save" data-save-channel-note="${n.id}" title="저장">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M5 13L9 17L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <button type="button" class="quicknote-item-cancel" data-cancel-channel-note-edit="${n.id}" title="취소">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+      </li>
+    `;
+        }
+        return `
+      <li class="quicknote-item" data-note-id="${n.id}">
+        <div class="quicknote-item-body">
+          <span class="quicknote-item-time">${formatQuickNoteTime(n.createdAt)}</span>
+          <div class="quicknote-item-text">${escapeHtml(n.text)}</div>
+        </div>
+        <div class="quicknote-item-actions">
+          <button type="button" class="quicknote-item-edit" data-edit-channel-note="${n.id}" title="수정">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4L16.5 3.5z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <button type="button" class="quicknote-item-delete" data-delete-channel-note="${n.id}" title="삭제">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+      </li>
+    `;
+      })
+      .join("");
+
+    renderChannelNotePagination(channel, totalPages);
+  }
+
+  function renderAllChannelNotes() {
+    Object.keys(CHANNEL_LABELS).forEach(renderChannelNotes);
+  }
+
+  function addChannelNote(channel, text) {
+    const trimmed = text.trim();
+    if (!trimmed) return;
+    channelNotes.push({
+      id: `cn${Date.now()}${Math.random().toString(16).slice(2, 6)}`,
+      channel,
+      text: trimmed,
+      createdAt: new Date().toISOString(),
+    });
+    saveChannelNotes();
+    channelNotePages[channel] = 1;
+    renderChannelNotes(channel);
+  }
+
+  function updateChannelNote(id, text) {
+    const trimmed = text.trim();
+    if (!trimmed) return;
+    const note = channelNotes.find((n) => n.id === id);
+    if (!note) return;
+    note.text = trimmed;
+    saveChannelNotes();
+  }
+
+  function deleteChannelNote(id) {
+    const note = channelNotes.find((n) => n.id === id);
+    channelNotes = channelNotes.filter((n) => n.id !== id);
+    saveChannelNotes();
+    if (note) renderChannelNotes(note.channel);
+  }
+
+  renderAllChannelNotes();
 
   // ---------- Consultation Console (call history + manual-matched AI answers) ----------
   const CONSULT_HISTORY_KEY = "planfra_consult_history";
@@ -1221,9 +1434,6 @@ document.addEventListener("DOMContentLoaded", () => {
   if (consultFabBtn && consultModalOverlay) {
     consultFabBtn.addEventListener("click", openConsultModal);
     document.getElementById("consultModalClose").addEventListener("click", closeConsultModal);
-    consultModalOverlay.addEventListener("click", (e) => {
-      if (e.target === consultModalOverlay) closeConsultModal();
-    });
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape" && !consultModalOverlay.hidden && manualModalOverlay.hidden) {
         closeConsultModal();
@@ -1531,6 +1741,101 @@ document.addEventListener("DOMContentLoaded", () => {
     const rankItem = e.target.closest(".rank-list [data-project-id], .deadline-alert-list [data-project-id]");
     if (rankItem) {
       goToProject(rankItem.dataset.projectId);
+    }
+
+    const channelNoteAddBtn = e.target.closest("[data-channel-note-add]");
+    if (channelNoteAddBtn) {
+      const channel = channelNoteAddBtn.dataset.channelNoteAdd;
+      const input = document.querySelector(`[data-channel-note-input="${channel}"]`);
+      if (input) {
+        addChannelNote(channel, input.value);
+        input.value = "";
+        input.focus();
+      }
+      return;
+    }
+
+    const editChannelNoteBtn = e.target.closest("[data-edit-channel-note]");
+    if (editChannelNoteBtn) {
+      channelNoteEditingId = editChannelNoteBtn.dataset.editChannelNote;
+      const note = channelNotes.find((n) => n.id === channelNoteEditingId);
+      if (note) renderChannelNotes(note.channel);
+      return;
+    }
+
+    const saveChannelNoteBtn = e.target.closest("[data-save-channel-note]");
+    if (saveChannelNoteBtn) {
+      const id = saveChannelNoteBtn.dataset.saveChannelNote;
+      const note = channelNotes.find((n) => n.id === id);
+      const textarea = document.querySelector(`[data-edit-channel-note-input="${id}"]`);
+      if (textarea) updateChannelNote(id, textarea.value);
+      channelNoteEditingId = null;
+      if (note) renderChannelNotes(note.channel);
+      return;
+    }
+
+    const cancelChannelNoteEditBtn = e.target.closest("[data-cancel-channel-note-edit]");
+    if (cancelChannelNoteEditBtn) {
+      const note = channelNotes.find((n) => n.id === cancelChannelNoteEditBtn.dataset.cancelChannelNoteEdit);
+      channelNoteEditingId = null;
+      if (note) renderChannelNotes(note.channel);
+      return;
+    }
+
+    const deleteChannelNoteBtn = e.target.closest("[data-delete-channel-note]");
+    if (deleteChannelNoteBtn) {
+      deleteChannelNote(deleteChannelNoteBtn.dataset.deleteChannelNote);
+      return;
+    }
+
+    const channelNotePrevBtn = e.target.closest("[data-channel-note-prev]");
+    if (channelNotePrevBtn) {
+      const channel = channelNotePrevBtn.dataset.channelNotePrev;
+      channelNotePages[channel] = (channelNotePages[channel] || 1) - 1;
+      renderChannelNotes(channel);
+      return;
+    }
+
+    const channelNoteNextBtn = e.target.closest("[data-channel-note-next]");
+    if (channelNoteNextBtn) {
+      const channel = channelNoteNextBtn.dataset.channelNoteNext;
+      channelNotePages[channel] = (channelNotePages[channel] || 1) + 1;
+      renderChannelNotes(channel);
+      return;
+    }
+
+    const channelNotePageBtn = e.target.closest("[data-channel-note-page]");
+    if (channelNotePageBtn) {
+      const channel = channelNotePageBtn.dataset.channelNotePage;
+      channelNotePages[channel] = Number(channelNotePageBtn.dataset.pageNum);
+      renderChannelNotes(channel);
+    }
+  });
+
+  contentEl.addEventListener("keydown", (e) => {
+    const noteInput = e.target.closest("[data-channel-note-input]");
+    if (noteInput && (e.ctrlKey || e.metaKey) && e.key === "Enter") {
+      e.preventDefault();
+      const channel = noteInput.dataset.channelNoteInput;
+      addChannelNote(channel, noteInput.value);
+      noteInput.value = "";
+      return;
+    }
+
+    const editInput = e.target.closest("[data-edit-channel-note-input]");
+    if (editInput) {
+      const id = editInput.dataset.editChannelNoteInput;
+      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+        e.preventDefault();
+        const note = channelNotes.find((n) => n.id === id);
+        updateChannelNote(id, editInput.value);
+        channelNoteEditingId = null;
+        if (note) renderChannelNotes(note.channel);
+      } else if (e.key === "Escape") {
+        const note = channelNotes.find((n) => n.id === id);
+        channelNoteEditingId = null;
+        if (note) renderChannelNotes(note.channel);
+      }
     }
   });
 
@@ -1934,7 +2239,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!container) return;
     const channelLabel = CHANNEL_LABELS[channel];
     const channelProjects = projects.filter((p) => (p.channel || "쿠팡") === channelLabel);
-    renderProjectRankList(container, channelProjects);
+    renderProjectRankList(container, channelProjects, ["예정", "진행중", "보류"], "표시할 프로젝트가 없습니다");
     renderChannelAlerts(channel);
   }
 
@@ -2764,7 +3069,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ---------- Firebase realtime sync (팀 공유 보드) ----------
   // 저장소별로 Firestore 문서 하나(boardData/<key>)에 배열 전체를 저장/구독한다.
-  // 최초 tasks 리스너가 로그인 허용 여부 판정을 겸한다: 성공하면 나머지 4개를 구독한다.
+  // 최초 tasks 리스너가 로그인 허용 여부 판정을 겸한다: 성공하면 나머지를 구독한다.
   let realtimeUnsubscribers = [];
 
   function detachRealtimeSync() {
@@ -2782,6 +3087,18 @@ document.addEventListener("DOMContentLoaded", () => {
           quickNotes = data && Array.isArray(data.list) ? data.list : [];
           localStorage.setItem(QUICKNOTES_STORAGE_KEY, JSON.stringify(quickNotes));
           renderQuickNotes();
+        })
+    );
+
+    realtimeUnsubscribers.push(
+      db
+        .collection("boardData")
+        .doc("channelNotes")
+        .onSnapshot((snap) => {
+          const data = snap.data();
+          channelNotes = data && Array.isArray(data.list) ? data.list : [];
+          localStorage.setItem(CHANNEL_NOTES_STORAGE_KEY, JSON.stringify(channelNotes));
+          renderAllChannelNotes();
         })
     );
 

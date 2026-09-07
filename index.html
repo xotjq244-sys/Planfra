@@ -215,7 +215,7 @@
           </div>
           <p class="quicknote-desc">짧은 미팅 기록을 남기는 공간입니다</p>
           <div class="quicknote-input-row">
-            <textarea id="quickNoteInput" class="quicknote-textarea" rows="2" placeholder="예: 09/03 14:00 OO업체 통화 - 배송 지연 문의, 다음주 재연락 요청 (Ctrl+Enter로 빠르게 추가)"></textarea>
+            <textarea id="quickNoteInput" class="quicknote-textarea" rows="2" placeholder="(Ctrl+Enter로 빠르게 추가)"></textarea>
             <button type="button" class="btn btn-primary quicknote-add-btn" id="quickNoteAddBtn">기록 추가</button>
           </div>
           <ul class="quicknote-list" id="quickNoteList"></ul>
@@ -260,19 +260,19 @@
               <div class="board-filter-popup" id="boardFilterPopup" hidden>
                 <label class="board-filter-option">
                   <input type="checkbox" class="board-filter-checkbox" value="예정">
-                  <span class="board-filter-dot" style="background:#6d4aff"></span>예정
+                  <span class="board-filter-dot board-filter-dot-scheduled"></span>예정
                 </label>
                 <label class="board-filter-option">
                   <input type="checkbox" class="board-filter-checkbox" value="진행중">
-                  <span class="board-filter-dot" style="background:#3b8ef0"></span>진행중
+                  <span class="board-filter-dot board-filter-dot-progress"></span>진행중
                 </label>
                 <label class="board-filter-option">
                   <input type="checkbox" class="board-filter-checkbox" value="보류">
-                  <span class="board-filter-dot" style="background:#f0883e"></span>보류
+                  <span class="board-filter-dot board-filter-dot-hold"></span>보류
                 </label>
                 <label class="board-filter-option">
                   <input type="checkbox" class="board-filter-checkbox" value="완료">
-                  <span class="board-filter-dot" style="background:#26b862"></span>완료
+                  <span class="board-filter-dot board-filter-dot-done"></span>완료
                 </label>
                 <div class="board-filter-actions">
                   <button type="button" class="link-btn" id="filterResetBtn">초기화</button>
@@ -408,7 +408,7 @@
         <div class="content-heading channel-heading">
           <div class="channel-heading-text">
             <h1>쿠팡</h1>
-            <p>쿠팡 채널의 진행중인 프로젝트 달성률을 확인하세요 (프로젝트 페이지와 연동됩니다)</p>
+            <p>쿠팡 채널의 프로젝트 달성률(예정·진행중·보류)을 확인하세요 (프로젝트 페이지와 연동됩니다)</p>
           </div>
           <div class="channel-heading-actions">
           <div class="channel-range-wrap" data-channel-range-wrap>
@@ -462,6 +462,22 @@
           </div>
         </section>
         <div class="channel-work-row">
+          <div class="panel channel-note-panel">
+            <div class="panel-header">
+              <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 4H16L20 8V20H4V4Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M16 4V8H20" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 12H16M8 16H13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg> 쿠팡 판매처 기록노트</h2>
+            </div>
+            <p class="quicknote-desc">쿠팡 채널 관련 짧은 기록을 남기는 공간입니다</p>
+            <div class="quicknote-input-row">
+              <textarea class="quicknote-textarea" rows="2" data-channel-note-input="coupang" placeholder="(Ctrl+Enter로 빠르게 추가)"></textarea>
+              <button type="button" class="btn btn-primary quicknote-add-btn" data-channel-note-add="coupang">기록 추가</button>
+            </div>
+            <ul class="quicknote-list" data-channel-note-list="coupang"></ul>
+            <div class="quicknote-pagination" data-channel-note-pagination="coupang">
+              <button type="button" class="quicknote-page-nav" data-channel-note-prev="coupang" aria-label="이전 페이지">&#8249;</button>
+              <div class="quicknote-page-numbers" data-channel-note-page-numbers="coupang"></div>
+              <button type="button" class="quicknote-page-nav" data-channel-note-next="coupang" aria-label="다음 페이지">&#8250;</button>
+            </div>
+          </div>
           <div class="panel channel-rank-panel">
             <div class="panel-header panel-header-actions">
               <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 20V10M12 20V4M20 20V14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> 쿠팡 프로젝트 달성률</h2>
@@ -483,7 +499,7 @@
         <div class="content-heading channel-heading">
           <div class="channel-heading-text">
             <h1>자사몰</h1>
-            <p>자사몰 채널의 진행중인 프로젝트 달성률을 확인하세요 (프로젝트 페이지와 연동됩니다)</p>
+            <p>자사몰 채널의 프로젝트 달성률(예정·진행중·보류)을 확인하세요 (프로젝트 페이지와 연동됩니다)</p>
           </div>
           <div class="channel-heading-actions">
           <div class="channel-range-wrap" data-channel-range-wrap>
@@ -537,6 +553,22 @@
           </div>
         </section>
         <div class="channel-work-row">
+          <div class="panel channel-note-panel">
+            <div class="panel-header">
+              <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 4H16L20 8V20H4V4Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M16 4V8H20" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 12H16M8 16H13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg> 자사몰 판매처 기록노트</h2>
+            </div>
+            <p class="quicknote-desc">자사몰 채널 관련 짧은 기록을 남기는 공간입니다</p>
+            <div class="quicknote-input-row">
+              <textarea class="quicknote-textarea" rows="2" data-channel-note-input="ownmall" placeholder="(Ctrl+Enter로 빠르게 추가)"></textarea>
+              <button type="button" class="btn btn-primary quicknote-add-btn" data-channel-note-add="ownmall">기록 추가</button>
+            </div>
+            <ul class="quicknote-list" data-channel-note-list="ownmall"></ul>
+            <div class="quicknote-pagination" data-channel-note-pagination="ownmall">
+              <button type="button" class="quicknote-page-nav" data-channel-note-prev="ownmall" aria-label="이전 페이지">&#8249;</button>
+              <div class="quicknote-page-numbers" data-channel-note-page-numbers="ownmall"></div>
+              <button type="button" class="quicknote-page-nav" data-channel-note-next="ownmall" aria-label="다음 페이지">&#8250;</button>
+            </div>
+          </div>
           <div class="panel channel-rank-panel">
             <div class="panel-header panel-header-actions">
               <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 20V10M12 20V4M20 20V14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> 자사몰 프로젝트 달성률</h2>
@@ -558,7 +590,7 @@
         <div class="content-heading channel-heading">
           <div class="channel-heading-text">
             <h1>스마트스토어</h1>
-            <p>스마트스토어 채널의 진행중인 프로젝트 달성률을 확인하세요 (프로젝트 페이지와 연동됩니다)</p>
+            <p>스마트스토어 채널의 프로젝트 달성률(예정·진행중·보류)을 확인하세요 (프로젝트 페이지와 연동됩니다)</p>
           </div>
           <div class="channel-heading-actions">
           <div class="channel-range-wrap" data-channel-range-wrap>
@@ -612,6 +644,22 @@
           </div>
         </section>
         <div class="channel-work-row">
+          <div class="panel channel-note-panel">
+            <div class="panel-header">
+              <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 4H16L20 8V20H4V4Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M16 4V8H20" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 12H16M8 16H13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg> 스마트스토어 판매처 기록노트</h2>
+            </div>
+            <p class="quicknote-desc">스마트스토어 채널 관련 짧은 기록을 남기는 공간입니다</p>
+            <div class="quicknote-input-row">
+              <textarea class="quicknote-textarea" rows="2" data-channel-note-input="smartstore" placeholder="(Ctrl+Enter로 빠르게 추가)"></textarea>
+              <button type="button" class="btn btn-primary quicknote-add-btn" data-channel-note-add="smartstore">기록 추가</button>
+            </div>
+            <ul class="quicknote-list" data-channel-note-list="smartstore"></ul>
+            <div class="quicknote-pagination" data-channel-note-pagination="smartstore">
+              <button type="button" class="quicknote-page-nav" data-channel-note-prev="smartstore" aria-label="이전 페이지">&#8249;</button>
+              <div class="quicknote-page-numbers" data-channel-note-page-numbers="smartstore"></div>
+              <button type="button" class="quicknote-page-nav" data-channel-note-next="smartstore" aria-label="다음 페이지">&#8250;</button>
+            </div>
+          </div>
           <div class="panel channel-rank-panel">
             <div class="panel-header panel-header-actions">
               <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 20V10M12 20V4M20 20V14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> 스마트스토어 프로젝트 달성률</h2>
@@ -633,7 +681,7 @@
         <div class="content-heading channel-heading">
           <div class="channel-heading-text">
             <h1>톡딜</h1>
-            <p>톡딜 채널의 진행중인 프로젝트 달성률을 확인하세요 (프로젝트 페이지와 연동됩니다)</p>
+            <p>톡딜 채널의 프로젝트 달성률(예정·진행중·보류)을 확인하세요 (프로젝트 페이지와 연동됩니다)</p>
           </div>
           <div class="channel-heading-actions">
           <div class="channel-range-wrap" data-channel-range-wrap>
@@ -687,6 +735,22 @@
           </div>
         </section>
         <div class="channel-work-row">
+          <div class="panel channel-note-panel">
+            <div class="panel-header">
+              <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 4H16L20 8V20H4V4Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M16 4V8H20" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 12H16M8 16H13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg> 톡딜 판매처 기록노트</h2>
+            </div>
+            <p class="quicknote-desc">톡딜 채널 관련 짧은 기록을 남기는 공간입니다</p>
+            <div class="quicknote-input-row">
+              <textarea class="quicknote-textarea" rows="2" data-channel-note-input="talkdeal" placeholder="(Ctrl+Enter로 빠르게 추가)"></textarea>
+              <button type="button" class="btn btn-primary quicknote-add-btn" data-channel-note-add="talkdeal">기록 추가</button>
+            </div>
+            <ul class="quicknote-list" data-channel-note-list="talkdeal"></ul>
+            <div class="quicknote-pagination" data-channel-note-pagination="talkdeal">
+              <button type="button" class="quicknote-page-nav" data-channel-note-prev="talkdeal" aria-label="이전 페이지">&#8249;</button>
+              <div class="quicknote-page-numbers" data-channel-note-page-numbers="talkdeal"></div>
+              <button type="button" class="quicknote-page-nav" data-channel-note-next="talkdeal" aria-label="다음 페이지">&#8250;</button>
+            </div>
+          </div>
           <div class="panel channel-rank-panel">
             <div class="panel-header panel-header-actions">
               <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 20V10M12 20V4M20 20V14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> 톡딜 프로젝트 달성률</h2>

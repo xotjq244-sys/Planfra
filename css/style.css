@@ -18,6 +18,34 @@
   --channel-ownmall: #26b862;
   --channel-smartstore: #f0883e;
   --channel-talkdeal: #3b8ef0;
+
+  /* Typography */
+  --font-sans: "Inter", "Noto Sans KR", "Malgun Gothic", "Apple SD Gothic Neo", -apple-system, BlinkMacSystemFont, sans-serif;
+
+  /* Semantic colors: solid + soft background pair per status, reused across
+     buttons, badges, icons and alerts so every UI surface stays in sync. */
+  --color-primary: #3b6bf0;
+  --color-primary-hover: #2f58cc;
+
+  --color-info: #3b8ef0;
+  --color-info-bg: #e2f0ff;
+
+  --color-danger: #ff5c7d;
+  --color-danger-strong: #e5486b;
+  --color-danger-bg: #ffe6ea;
+
+  --color-warning: #f0883e;
+  --color-warning-bg: #fdeee0;
+
+  --color-success: #26b862;
+  --color-success-strong: #1fa15c;
+  --color-success-bg: #e2f6ea;
+
+  --color-violet: #6d4aff;
+  --color-violet-bg: #eee6ff;
+
+  --color-teal: #17a589;
+  --color-teal-bg: #e2fbf6;
 }
 
 * {
@@ -26,7 +54,7 @@
 
 body {
   margin: 0;
-  font-family: "Inter", "Noto Sans KR", "Malgun Gothic", "Apple SD Gothic Neo", -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: var(--font-sans);
   background: var(--content-bg);
   color: var(--text-main);
   -webkit-font-smoothing: antialiased;
@@ -449,7 +477,7 @@ ul {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #ff5c7d;
+  background: var(--color-danger);
   border: 1.5px solid var(--card-bg);
 }
 
@@ -792,12 +820,12 @@ ul {
   flex-shrink: 0;
 }
 
-.stat-icon-a { background: #eee6ff; color: #6d4aff; }
-.stat-icon-b { background: #e2f6ea; color: #26b862; }
-.stat-icon-c { background: #fdeee0; color: #f0883e; }
-.stat-icon-d { background: #e2f0ff; color: #3b8ef0; }
-.stat-icon-e { background: #ffe6ea; color: #ff5c7d; }
-.stat-icon-f { background: #e2fbf6; color: #17a589; }
+.stat-icon-a { background: var(--color-violet-bg); color: var(--color-violet); }
+.stat-icon-b { background: var(--color-success-bg); color: var(--color-success); }
+.stat-icon-c { background: var(--color-warning-bg); color: var(--color-warning); }
+.stat-icon-d { background: var(--color-info-bg); color: var(--color-info); }
+.stat-icon-e { background: var(--color-danger-bg); color: var(--color-danger); }
+.stat-icon-f { background: var(--color-teal-bg); color: var(--color-teal); }
 
 .stat-info {
   display: flex;
@@ -938,7 +966,17 @@ ul {
   word-break: break-word;
 }
 
-.quicknote-item-delete {
+.quicknote-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.quicknote-item-edit,
+.quicknote-item-delete,
+.quicknote-item-save,
+.quicknote-item-cancel {
   flex-shrink: 0;
   border: none;
   background: transparent;
@@ -952,9 +990,32 @@ ul {
   justify-content: center;
 }
 
-.quicknote-item-delete:hover {
+.quicknote-item-edit:hover,
+.quicknote-item-save:hover {
   background: var(--card-bg);
-  color: #ff5c7d;
+  color: var(--sidebar-grad-start);
+}
+
+.quicknote-item-delete:hover,
+.quicknote-item-cancel:hover {
+  background: var(--card-bg);
+  color: var(--color-danger);
+}
+
+.quicknote-edit-textarea {
+  width: 100%;
+  min-height: 44px;
+  max-height: 140px;
+  resize: vertical;
+  border: 1px solid var(--sidebar-grad-start);
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin-top: 4px;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--text-main);
+  background: var(--card-bg);
+  outline: none;
 }
 
 .quicknote-empty {
@@ -971,10 +1032,6 @@ ul {
   gap: 4px;
   margin-top: 12px;
   flex-shrink: 0;
-}
-
-.quicknote-pagination.is-inactive {
-  visibility: hidden;
 }
 
 .quicknote-page-nav {
@@ -1050,8 +1107,8 @@ ul {
   color: var(--text-muted);
 }
 
-.stat-value-warn { color: #f0883e; }
-.stat-value-danger { color: #ff5c7d; }
+.stat-value-warn { color: var(--color-warning); }
+.stat-value-danger { color: var(--color-danger); }
 
 .panel {
   background: var(--card-bg);
@@ -1114,12 +1171,12 @@ ul {
 }
 
 .btn-primary {
-  background: #3b6bf0;
+  background: var(--color-primary);
   color: #fff;
 }
 
 .btn-primary:hover {
-  background: #2f58cc;
+  background: var(--color-primary-hover);
 }
 
 .site-badge {
@@ -1152,8 +1209,8 @@ ul {
 }
 
 .ch-btn-delete:hover {
-  border-color: #ff5c7d;
-  color: #ff5c7d;
+  border-color: var(--color-danger);
+  color: var(--color-danger);
 }
 
 .toggle {
@@ -1384,9 +1441,9 @@ ul {
   white-space: nowrap;
 }
 
-.status-overdue { background: #ffe6ea; color: #ff5c7d; }
-.status-today { background: #fdeee0; color: #f0883e; }
-.status-soon { background: #eee6ff; color: #6d4aff; }
+.status-overdue { background: var(--color-danger-bg); color: var(--color-danger); }
+.status-today { background: var(--color-warning-bg); color: var(--color-warning); }
+.status-soon { background: var(--color-violet-bg); color: var(--color-violet); }
 .status-normal { background: var(--content-bg); color: var(--text-muted); }
 
 /* ---------- Project Board ---------- */
@@ -1458,7 +1515,7 @@ ul {
 }
 
 .board-search-clear:hover {
-  color: #ff5c7d;
+  color: var(--color-danger);
 }
 
 .board-filter-wrap {
@@ -1522,6 +1579,11 @@ ul {
   border-radius: 50%;
   flex-shrink: 0;
 }
+
+.board-filter-dot-scheduled { background: var(--color-violet); }
+.board-filter-dot-progress { background: var(--color-info); }
+.board-filter-dot-hold { background: var(--color-warning); }
+.board-filter-dot-done { background: var(--color-success); }
 
 .board-filter-actions {
   display: flex;
@@ -1626,7 +1688,7 @@ ul {
 }
 
 .board-cards.drag-over {
-  background-color: #eee6ff;
+  background-color: var(--color-violet-bg);
   box-shadow: inset 0 0 0 2px var(--sidebar-grad-start);
 }
 
@@ -1724,7 +1786,7 @@ body.board-dragging-active .board-card {
 }
 
 .board-card-icon-btn.board-card-delete-btn:hover {
-  color: #ff5c7d;
+  color: var(--color-danger);
 }
 
 .board-card-dates {
@@ -2147,7 +2209,7 @@ body.board-dragging-active .board-card {
 }
 
 .winctrl-close:hover {
-  background: #ff5c7d;
+  background: var(--color-danger);
   color: #fff;
 }
 
@@ -2181,8 +2243,8 @@ body.board-dragging-active .board-card {
 }
 
 .req-badge {
-  border: 1px solid #ff5c7d;
-  color: #ff5c7d;
+  border: 1px solid var(--color-danger);
+  color: var(--color-danger);
   font-size: 10px;
   font-weight: 700;
   padding: 1px 4px;
@@ -2286,7 +2348,7 @@ body.board-dragging-active .board-card {
   width: 9px;
   height: 9px;
   border-radius: 50%;
-  background: #ff3b52;
+  background: var(--color-danger);
 }
 
 .sys-modal-body {
@@ -2329,15 +2391,15 @@ body.board-dragging-active .board-card {
 }
 
 .sys-summary-value.is-positive {
-  color: #3b6bf0;
+  color: var(--color-primary);
 }
 
 .sys-summary-value.is-down {
-  color: #e5486b;
+  color: var(--color-danger-strong);
 }
 
 .sys-summary-card.has-alert .sys-summary-value {
-  color: #e5486b;
+  color: var(--color-danger-strong);
 }
 
 .sys-toolbar {
@@ -2467,12 +2529,12 @@ body.board-dragging-active .board-card {
 }
 
 .sys-badge-stopped {
-  background: #ffe7ed;
-  color: #e5486b;
+  background: var(--color-danger-bg);
+  color: var(--color-danger-strong);
 }
 
 .sys-badge-error {
-  background: #ff5c7d;
+  background: var(--color-danger);
   color: #fff;
 }
 
@@ -2483,8 +2545,8 @@ body.board-dragging-active .board-card {
 }
 
 .sys-badge-ok {
-  background: #e3f6e9;
-  color: #1fa15c;
+  background: var(--color-success-bg);
+  color: var(--color-success-strong);
 }
 
 /* ---------- Channel Deadline Alerts ---------- */
@@ -2497,6 +2559,19 @@ body.board-dragging-active .board-card {
 /* display:flex가 [hidden]의 기본 display:none을 덮어쓰므로 명시적으로 숨긴다 */
 .channel-work-row[hidden] {
   display: none;
+}
+
+.channel-note-panel {
+  flex: 1.2;
+  min-width: 260px;
+  min-height: 548px;
+  display: flex;
+  flex-direction: column;
+}
+
+.channel-note-panel .quicknote-list {
+  flex: 1;
+  overflow-y: auto;
 }
 
 .channel-rank-panel {
@@ -2552,7 +2627,7 @@ body.board-dragging-active .board-card {
 }
 
 .donut-svg text {
-  font-family: "Inter", "Noto Sans KR", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+  font-family: var(--font-sans);
 }
 
 .donut-seg {
@@ -2628,8 +2703,8 @@ body.board-dragging-active .board-card {
   line-height: 1;
 }
 
-.deadline-alert-danger .deadline-alert-dot { background: #ffe4ea; color: #ff5c7d; }
-.deadline-alert-warn .deadline-alert-dot { background: #fdeedd; color: #f0883e; }
+.deadline-alert-danger .deadline-alert-dot { background: var(--color-danger-bg); color: var(--color-danger); }
+.deadline-alert-warn .deadline-alert-dot { background: var(--color-warning-bg); color: var(--color-warning); }
 
 .deadline-alert-body {
   flex: 1;
@@ -2760,7 +2835,7 @@ body.board-dragging-active .board-card {
 }
 
 .board-range-clear:hover {
-  color: #ff5c7d;
+  color: var(--color-danger);
 }
 
 .board-range-popup {
@@ -3058,17 +3133,14 @@ body.board-dragging-active .board-card {
 }
 
 .consult-customer-status.is-existing {
-  background: #e2f0ff;
-  color: #3b8ef0;
+  background: var(--color-info-bg);
+  color: var(--color-info);
 }
 
 .consult-customer-status.is-new {
-  background: #fdeee0;
-  color: #f0883e;
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
 }
-
-:root[data-theme="dark"] .consult-customer-status.is-existing { background: #152c45; color: #6fb4f5; }
-:root[data-theme="dark"] .consult-customer-status.is-new { background: #3a2a17; color: #f0a15e; }
 
 .consult-col {
   flex: 1;
@@ -3251,12 +3323,10 @@ body.board-dragging-active .board-card {
   font-weight: 700;
   padding: 2px 8px;
   border-radius: 999px;
-  background: #eee6ff;
-  color: #6d4aff;
+  background: var(--color-violet-bg);
+  color: var(--color-violet);
   white-space: nowrap;
 }
-
-:root[data-theme="dark"] .consult-ai-match-badge { background: #2a2450; color: #a893ff; }
 
 .consult-ai-item-keywords {
   display: flex;
@@ -3402,22 +3472,31 @@ body.board-dragging-active .board-card {
   --shadow-card: 0 4px 18px rgba(0, 0, 0, 0.4);
   --channel-ownmall: #1f9e53;
   --channel-smartstore: #d9692a;
+
+  --color-info: #6fb4f5;
+  --color-info-bg: #152c45;
+
+  --color-danger: #ff7d97;
+  --color-danger-strong: #ff7d97;
+  --color-danger-bg: #3a1c26;
+
+  --color-warning: #f0a15e;
+  --color-warning-bg: #3a2a17;
+
+  --color-success: #4cd888;
+  --color-success-strong: #4cd888;
+  --color-success-bg: #16341f;
+
+  --color-violet: #a893ff;
+  --color-violet-bg: #2a2450;
+
+  --color-teal: #3fd0b3;
+  --color-teal-bg: #123530;
 }
 
 :root[data-theme="dark"] .modal-overlay {
   background: rgba(8, 9, 14, 0.62);
 }
-
-:root[data-theme="dark"] .stat-icon-a { background: #2a2450; color: #a893ff; }
-:root[data-theme="dark"] .stat-icon-b { background: #16341f; color: #4cd888; }
-:root[data-theme="dark"] .stat-icon-c { background: #3a2a17; color: #f0a15e; }
-:root[data-theme="dark"] .stat-icon-d { background: #152c45; color: #6fb4f5; }
-:root[data-theme="dark"] .stat-icon-e { background: #3a1c26; color: #ff7d97; }
-:root[data-theme="dark"] .stat-icon-f { background: #123530; color: #3fd0b3; }
-
-:root[data-theme="dark"] .status-overdue { background: #3a1c26; color: #ff7d97; }
-:root[data-theme="dark"] .status-today { background: #3a2a17; color: #f0a15e; }
-:root[data-theme="dark"] .status-soon { background: #2a2450; color: #a893ff; }
 
 :root[data-theme="dark"] .rank-number.rank-1 { background: #3c3116; color: #e8b83c; }
 :root[data-theme="dark"] .rank-number.rank-2 { background: #2a2d38; color: #b6bccb; }
@@ -3460,23 +3539,9 @@ body.board-dragging-active .board-card {
   background: #23262f;
 }
 
-:root[data-theme="dark"] .sys-badge-stopped {
-  background: #3a1c26;
-  color: #ff7d97;
-}
-
-:root[data-theme="dark"] .sys-badge-ok {
-  background: #1c3a2a;
-  color: #4ed88a;
-}
-
 :root[data-theme="dark"] .sys-summary-card {
   background: #262936;
   border-color: #363a4a;
-}
-
-:root[data-theme="dark"] .board-cards.drag-over {
-  background-color: #2a2450;
 }
 
 :root[data-theme="dark"] .dp-day-in-range {
@@ -3486,9 +3551,6 @@ body.board-dragging-active .board-card {
 :root[data-theme="dark"] .dp-day-in-range:hover {
   background: #362d63;
 }
-
-:root[data-theme="dark"] .deadline-alert-danger .deadline-alert-dot { background: #3a1c26; color: #ff7d97; }
-:root[data-theme="dark"] .deadline-alert-warn .deadline-alert-dot { background: #3a2a17; color: #f0a15e; }
 
 :root[data-theme="dark"] .channel-view-tabs,
 :root[data-theme="dark"] .sys-view-tabs {
