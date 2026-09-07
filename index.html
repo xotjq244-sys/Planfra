@@ -18,7 +18,14 @@
 </script>
 </head>
 <body>
-<div class="app">
+<div class="modal-overlay" id="authGateOverlay">
+  <div class="modal auth-gate-modal">
+    <h2>Planfra 로그인</h2>
+    <p id="authGateMessage">팀 구글 계정으로 로그인해주세요.</p>
+    <button type="button" class="btn btn-primary" id="googleSignInBtn">Google로 로그인</button>
+  </div>
+</div>
+<div class="app" id="appRoot" style="display:none">
 
   <!-- Sidebar -->
   <aside class="sidebar" id="sidebar">
@@ -963,6 +970,9 @@
           <div class="consult-note-col consult-box">
             <label class="consult-section-label" for="consultRecordInput">② 상담 내용 — 고객이 하는 말을 그대로 들으며 기록하세요</label>
             <textarea class="consult-record-textarea consult-record-textarea-main" id="consultRecordInput" rows="4" placeholder="예: 주문한 냉동 제품이 배송 중 다 녹아서 왔다고 하심 (입력하는 대로 오른쪽 답변가이드에 추천 답변이 표시됩니다)"></textarea>
+            <div class="consult-record-actions">
+              <button type="button" class="btn btn-primary consult-save-record-btn" id="consultSaveRecordBtn">상담 이력 저장</button>
+            </div>
           </div>
           <div class="consult-col consult-history-col consult-box">
             <div class="consult-col-header">
@@ -1069,6 +1079,10 @@
   </div>
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
+<script src="js/firebase-init.js"></script>
 <script src="js/script.js"></script>
 </body>
 </html>

@@ -567,6 +567,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function saveTasks() {
     localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(tasks));
+    if (window.db) window.db.collection("boardData").doc("tasks").set({ list: tasks }).catch((e) => console.error("saveTasks sync failed", e));
   }
 
   let tasks = loadTasks();
@@ -863,6 +864,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function saveQuickNotes() {
     localStorage.setItem(QUICKNOTES_STORAGE_KEY, JSON.stringify(quickNotes));
+    if (window.db) window.db.collection("boardData").doc("quickNotes").set({ list: quickNotes }).catch((e) => console.error("saveQuickNotes sync failed", e));
   }
 
   let quickNotes = loadQuickNotes();
@@ -1053,6 +1055,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function saveConsultHistory() {
     localStorage.setItem(CONSULT_HISTORY_KEY, JSON.stringify(consultHistory));
+    if (window.db) window.db.collection("boardData").doc("consultHistory").set({ list: consultHistory }).catch((e) => console.error("saveConsultHistory sync failed", e));
   }
 
   let consultHistory = loadConsultHistory();
@@ -1078,6 +1081,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function saveManual() {
     localStorage.setItem(CONSULT_MANUAL_KEY, JSON.stringify(manualEntries));
+    if (window.db) window.db.collection("boardData").doc("manualEntries").set({ list: manualEntries }).catch((e) => console.error("saveManual sync failed", e));
   }
 
   let manualEntries = loadManual();
@@ -1110,6 +1114,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const consultHistoryCount = document.getElementById("consultHistoryCount");
   const consultRecordInput = document.getElementById("consultRecordInput");
   const consultAddRecordBtn = document.getElementById("consultAddRecordBtn");
+  const consultSaveRecordBtn = document.getElementById("consultSaveRecordBtn");
   const consultAiList = document.getElementById("consultAiList");
   const consultAiCount = document.getElementById("consultAiCount");
 
@@ -1275,6 +1280,29 @@ document.addEventListener("DOMContentLoaded", () => {
       consultRecordInput.focus();
       const endPos = consultRecordInput.value.length;
       consultRecordInput.setSelectionRange(endPos, endPos);
+    });
+
+    consultSaveRecordBtn.addEventListener("click", () => {
+      const phone = normalizePhone(consultPhoneInput.value);
+      const note = consultRecordInput.value.trim();
+      if (!phone || !note) {
+        (phone ? consultRecordInput : consultPhoneInput).focus();
+        return;
+      }
+      consultHistory.push({
+        id: `h${Date.now()}${Math.random().toString(16).slice(2, 6)}`,
+        phone,
+        customerName: consultNameInput.value.trim(),
+        channel: consultChannelInput.value,
+        orderNo: consultOrderNoInput.value.trim(),
+        invoiceNo: consultInvoiceNoInput.value.trim(),
+        note,
+        createdAt: new Date().toISOString(),
+      });
+      saveConsultHistory();
+      currentConsultPhone = phone;
+      renderConsultHistory();
+      consultRecordInput.value = "";
     });
   }
 
@@ -1655,6 +1683,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function saveProjects() {
     localStorage.setItem(PROJECTS_STORAGE_KEY, JSON.stringify(projects));
+    if (window.db) window.db.collection("boardData").doc("projects").set({ list: projects }).catch((e) => console.error("saveProjects sync failed", e));
   }
 
   let projects = loadProjects();
@@ -2732,4 +2761,101 @@ document.addEventListener("DOMContentLoaded", () => {
 
     renderSystemStatus();
   }
+
+  // ---------- Firebase realtime sync (팀 공유 보드) ----------
+  // 저장소별로 Firestore 문서 하나(boardData/<key>)에 배열 전체를 저장/구독한다.
+  // 최초 tasks 리스너가 로그인 허용 여부 판정을 겸한다: 성공하면 나머지 4개를 구독한다.
+  let realtimeUnsubscribers = [];
+
+  function detachRealtimeSync() {
+    realtimeUnsubscribers.forEach((unsub) => unsub());
+    realtimeUnsubscribers = [];
+  }
+
+  function attachRemainingStores() {
+    realtimeUnsubscribers.push(
+      db
+        .collection("boardData")
+        .doc("quickNotes")
+        .onSnapshot((snap) => {
+          const data = snap.data();
+          quickNotes = data && Array.isArray(data.list) ? data.list : [];
+          localStorage.setItem(QUICKNOTES_STORAGE_KEY, JSON.stringify(quickNotes));
+          renderQuickNotes();
+        })
+    );
+
+    realtimeUnsubscribers.push(
+      db
+        .collection("boardData")
+        .doc("manualEntries")
+        .onSnapshot((snap) => {
+          if (!snap.exists) {
+            manualEntries = seedDefaultManual();
+            saveManual();
+            return;
+          }
+          const data = snap.data();
+          manualEntries = Array.isArray(data.list) ? data.list : [];
+          localStorage.setItem(CONSULT_MANUAL_KEY, JSON.stringify(manualEntries));
+          renderManualList();
+        })
+    );
+
+    realtimeUnsubscribers.push(
+      db
+        .collection("boardData")
+        .doc("projects")
+        .onSnapshot((snap) => {
+          const data = snap.data();
+          projects = data && Array.isArray(data.list) ? data.list : [];
+          localStorage.setItem(PROJECTS_STORAGE_KEY, JSON.stringify(projects));
+          renderBoard();
+        })
+    );
+
+    realtimeUnsubscribers.push(
+      db
+        .collection("boardData")
+        .doc("consultHistory")
+        .onSnapshot((snap) => {
+          const data = snap.data();
+          consultHistory = data && Array.isArray(data.list) ? data.list : [];
+          localStorage.setItem(CONSULT_HISTORY_KEY, JSON.stringify(consultHistory));
+          renderConsultHistory();
+        })
+    );
+  }
+
+  function attachRealtimeSync(attemptedEmail) {
+    detachRealtimeSync();
+    let gateOpened = false;
+    realtimeUnsubscribers.push(
+      db
+        .collection("boardData")
+        .doc("tasks")
+        .onSnapshot(
+          (snap) => {
+            const data = snap.data();
+            tasks = data && Array.isArray(data.list) ? data.list : [];
+            localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(tasks));
+            renderAllTasks();
+            if (!gateOpened) {
+              gateOpened = true;
+              window.__planfraAuthSuccess();
+              attachRemainingStores();
+            }
+          },
+          (err) => {
+            console.error("tasks sync error", err);
+            window.__planfraAuthDenied(attemptedEmail);
+          }
+        )
+    );
+  }
+
+  window.attachRealtimeSync = attachRealtimeSync;
+  window.detachRealtimeSync = detachRealtimeSync;
+  (window.__planfraOnReadyQueue || []).forEach((fn) => fn());
+  window.__planfraOnReadyQueue = [];
 });
