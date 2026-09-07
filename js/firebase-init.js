@@ -37,6 +37,7 @@ function showAppRoot() {
 
 function showLoginGate(message) {
   authGateMessage.textContent = message || "팀 구글 계정으로 로그인해주세요.";
+  googleSignInBtn.hidden = false;
   authGateOverlay.hidden = false;
   appRoot.style.display = "none";
 }
