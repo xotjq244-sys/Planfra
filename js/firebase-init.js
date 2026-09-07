@@ -2,9 +2,9 @@
 // apiKey 등은 비밀값이 아니며, 실제 접근 제어는 Firestore 보안 규칙이 담당한다.
 const firebaseConfig = {
   apiKey: "AIzaSyDe7Or_Gb-UXHQ2-gANs_-0qN_hc_oBZLA",
-  authDomain: "planfrom-2c51e.firebaseapp.com",
-  projectId: "planfrom-2c51e",
-  storageBucket: "planfrom-2c51e.firebasestorage.app",
+  authDomain: "planfra-2c51e.firebaseapp.com",
+  projectId: "planfra-2c51e",
+  storageBucket: "planfra-2c51e.firebasestorage.app",
   messagingSenderId: "879012683511",
   appId: "1:879012683511:web:d0ef58b0c4fa62db0cbdf2",
 };
