@@ -31,6 +31,11 @@ function runWhenScriptReady(fn) {
   else window.__planfraOnReadyQueue.push(fn);
 }
 
+// 이전에 로그인에 성공한 적이 있으면 기억해뒀다가, 다음 방문 때는 Firebase의
+// 로그인 상태 확인이 끝나기 전에 미리 화면을 띄워 "확인 중" 깜빡임을 없앤다.
+// 실제로 세션이 끊겨 있었다면 onAuthStateChanged가 곧이어 로그인 화면으로 되돌린다.
+const AUTH_HINT_KEY = "planfra_auth_hint";
+
 function showAppRoot() {
   authGateOverlay.hidden = true;
   appRoot.style.display = "";
@@ -42,10 +47,16 @@ function showLoginGate(message) {
   googleSignInBtn.hidden = false;
   authGateOverlay.hidden = false;
   appRoot.style.display = "none";
+  localStorage.removeItem(AUTH_HINT_KEY);
+}
+
+if (localStorage.getItem(AUTH_HINT_KEY) === "1") {
+  showAppRoot();
 }
 
 // script.js의 tasks 리스너가 이 두 함수를 호출해 로그인 성공/거부를 알려준다.
 window.__planfraAuthSuccess = function () {
+  localStorage.setItem(AUTH_HINT_KEY, "1");
   showAppRoot();
 };
 
