@@ -18,6 +18,7 @@ window.db = db;
 
 const authGateOverlay = document.getElementById("authGateOverlay");
 const authGateMessage = document.getElementById("authGateMessage");
+const authGateSpinner = document.querySelector(".auth-gate-spinner");
 const appRoot = document.getElementById("appRoot");
 const googleSignInBtn = document.getElementById("googleSignInBtn");
 
@@ -37,6 +38,7 @@ function showAppRoot() {
 
 function showLoginGate(message) {
   authGateMessage.textContent = message || "팀 구글 계정으로 로그인해주세요.";
+  authGateSpinner.hidden = true;
   googleSignInBtn.hidden = false;
   authGateOverlay.hidden = false;
   appRoot.style.display = "none";
