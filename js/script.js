@@ -40,7 +40,18 @@ document.addEventListener("DOMContentLoaded", () => {
     link.addEventListener("click", (e) => {
       e.preventDefault();
       document.querySelectorAll(".nav-item.active").forEach((item) => item.classList.remove("active"));
+      document.querySelectorAll(".submenu .nav-link.active").forEach((a) => a.classList.remove("active"));
       link.parentElement.classList.add("active");
+    });
+  });
+
+  document.querySelectorAll(".submenu .nav-link").forEach((link) => {
+    link.addEventListener("click", (e) => {
+      e.preventDefault();
+      document.querySelectorAll(".nav-item.active").forEach((item) => item.classList.remove("active"));
+      document.querySelectorAll(".submenu .nav-link.active").forEach((a) => a.classList.remove("active"));
+      link.classList.add("active");
+      link.closest(".nav-item.has-submenu").classList.add("open");
     });
   });
 
@@ -658,7 +669,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // 지연된 프로젝트: 마감기한이 지났는데 완료 처리되지 않은 프로젝트
   // 긴급 프로젝트: 우선순위가 "긴급"이고 마감까지 1일 이내인 미완료 프로젝트
   // 마감 3일 이내 프로젝트: 마감까지 3일 이내로 남은 미완료 프로젝트
-  // 미완료 프로젝트: 상태가 "완료"가 아닌 프로젝트 전체
+  // 미완료 프로젝트: 상태가 "완료"·"종료"가 아닌 프로젝트 전체
   let projectStatGroups = { overdue: [], soon: [], urgent: [], incomplete: [] };
   const STAT_FILTER_LABELS = {
     overdue: "지연된 프로젝트",
@@ -670,7 +681,7 @@ document.addEventListener("DOMContentLoaded", () => {
     overdue: "마감기한이 지났는데 아직 완료 처리되지 않은 프로젝트",
     urgent: "우선순위 '긴급' + 마감까지 1일 이내(오늘·내일) 남은 미완료 프로젝트",
     soon: "마감까지 3일 이내(마감 당일 포함) 남은 미완료 프로젝트",
-    incomplete: "상태가 '완료'가 아닌 전체 프로젝트",
+    incomplete: "상태가 '완료'·'종료'가 아닌 전체 프로젝트",
   };
 
   function getProjectDueDiffDays(dueDate) {
@@ -688,7 +699,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const statPending = document.getElementById("statPendingCount");
     if (!statOverdue && !statToday && !statSoon && !statPending) return;
 
-    const incomplete = projects.filter((p) => (p.status || "진행중") !== "완료");
+    const incomplete = projects.filter((p) => !["완료", "종료"].includes(p.status || "진행중"));
 
     const overdueProjects = incomplete.filter((p) => {
       const diff = getProjectDueDiffDays(p.dueDate);
@@ -1317,7 +1328,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const consultFabBtn = document.getElementById("consultFabBtn");
   const consultModalOverlay = document.getElementById("consultModalOverlay");
   const consultPhoneInput = document.getElementById("consultPhoneInput");
-  const consultSearchBtn = document.getElementById("consultSearchBtn");
   const consultNameInput = document.getElementById("consultNameInput");
   const consultOrderNoInput = document.getElementById("consultOrderNoInput");
   const consultInvoiceNoInput = document.getElementById("consultInvoiceNoInput");
@@ -1331,10 +1341,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const consultAiList = document.getElementById("consultAiList");
   const consultAiCount = document.getElementById("consultAiCount");
 
+  let consultHistoryEditingId = null;
+
   function renderConsultHistory() {
     const phone = currentConsultPhone;
     if (!phone) {
-      consultHistoryList.innerHTML = `<li class="consult-history-empty">전화번호를 입력하고 조회해주세요</li>`;
+      consultHistoryList.innerHTML = `<li class="consult-history-empty">전화번호를 입력하면 상담 이력이 표시됩니다</li>`;
       consultHistoryCount.textContent = "0건";
       consultCustomerStatus.textContent = "";
       consultCustomerStatus.className = "consult-customer-status";
@@ -1357,11 +1369,42 @@ document.addEventListener("DOMContentLoaded", () => {
             if (h.orderNo) subParts.push(`주문번호 ${escapeHtml(h.orderNo)}`);
             if (h.invoiceNo) subParts.push(`송장번호 ${escapeHtml(h.invoiceNo)}`);
             const subHtml = subParts.length ? `<div class="consult-history-sub">${subParts.join(" · ")}</div>` : "";
-            return `
-        <li class="consult-history-item">
+
+            if (h.id === consultHistoryEditingId) {
+              return `
+        <li class="consult-history-item is-editing" data-history-id="${h.id}">
           <div class="consult-history-item-head">
             <span class="consult-history-time">${formatQuickNoteTime(h.createdAt)}</span>
-            <div class="consult-history-meta">${tagsHtml}</div>
+            <div class="consult-history-item-actions">
+              <button type="button" class="quicknote-item-save" data-save-history="${h.id}" title="저장">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M5 13L9 17L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+              <button type="button" class="quicknote-item-cancel" data-cancel-history-edit="${h.id}" title="취소">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+              </button>
+            </div>
+          </div>
+          <textarea class="consult-history-edit-textarea" data-edit-history-input="${h.id}">${escapeHtml(h.note)}</textarea>
+          ${subHtml}
+        </li>
+      `;
+            }
+
+            return `
+        <li class="consult-history-item" data-history-id="${h.id}">
+          <div class="consult-history-item-head">
+            <span class="consult-history-time">${formatQuickNoteTime(h.createdAt)}</span>
+            <div class="consult-history-head-right">
+              <div class="consult-history-meta">${tagsHtml}</div>
+              <div class="consult-history-item-actions">
+                <button type="button" class="quicknote-item-edit" data-edit-history="${h.id}" title="수정">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4L16.5 3.5z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <button type="button" class="quicknote-item-delete" data-delete-history="${h.id}" title="삭제">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                </button>
+              </div>
+            </div>
           </div>
           <div class="consult-history-text">${escapeHtml(h.note)}</div>
           ${subHtml}
@@ -1370,6 +1413,67 @@ document.addEventListener("DOMContentLoaded", () => {
           })
           .join("")
       : `<li class="consult-history-empty">상담 이력이 없습니다 (신규 고객)</li>`;
+  }
+
+  function updateConsultHistoryNote(id, text) {
+    const trimmed = text.trim();
+    if (!trimmed) return;
+    const item = consultHistory.find((h) => h.id === id);
+    if (!item) return;
+    item.note = trimmed;
+    saveConsultHistory();
+  }
+
+  function deleteConsultHistoryItem(id) {
+    consultHistory = consultHistory.filter((h) => h.id !== id);
+    saveConsultHistory();
+    renderConsultHistory();
+  }
+
+  if (consultHistoryList) {
+    consultHistoryList.addEventListener("click", (e) => {
+      const editBtn = e.target.closest("[data-edit-history]");
+      if (editBtn) {
+        consultHistoryEditingId = editBtn.dataset.editHistory;
+        renderConsultHistory();
+        return;
+      }
+
+      const saveBtn = e.target.closest("[data-save-history]");
+      if (saveBtn) {
+        const id = saveBtn.dataset.saveHistory;
+        const textarea = consultHistoryList.querySelector(`[data-edit-history-input="${id}"]`);
+        if (textarea) updateConsultHistoryNote(id, textarea.value);
+        consultHistoryEditingId = null;
+        renderConsultHistory();
+        return;
+      }
+
+      const cancelBtn = e.target.closest("[data-cancel-history-edit]");
+      if (cancelBtn) {
+        consultHistoryEditingId = null;
+        renderConsultHistory();
+        return;
+      }
+
+      const delBtn = e.target.closest("[data-delete-history]");
+      if (!delBtn) return;
+      deleteConsultHistoryItem(delBtn.dataset.deleteHistory);
+    });
+
+    consultHistoryList.addEventListener("keydown", (e) => {
+      const textarea = e.target.closest("[data-edit-history-input]");
+      if (!textarea) return;
+      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+        e.preventDefault();
+        updateConsultHistoryNote(textarea.dataset.editHistoryInput, textarea.value);
+        consultHistoryEditingId = null;
+        renderConsultHistory();
+      } else if (e.key === "Escape") {
+        consultHistoryEditingId = null;
+        renderConsultHistory();
+      }
+    });
   }
 
   // 조회 시 최근 이력에서 고객명/구매처를 찾아 비어있는 입력란만 채운다 (매번 다시 타이핑하지 않도록)
@@ -1421,6 +1525,7 @@ document.addEventListener("DOMContentLoaded", () => {
     consultChannelInput.value = "";
     consultRecordInput.value = "";
     currentConsultPhone = "";
+    consultHistoryEditingId = null;
     renderConsultHistory();
     renderConsultAi("");
     consultRecordInput.focus();
@@ -1440,16 +1545,18 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
 
-    consultSearchBtn.addEventListener("click", () => {
+    function lookupConsultHistory() {
       currentConsultPhone = normalizePhone(consultPhoneInput.value);
       renderConsultHistory();
       if (currentConsultPhone) autofillFromLatestHistory(currentConsultPhone);
-    });
+    }
+
+    consultPhoneInput.addEventListener("input", lookupConsultHistory);
 
     consultPhoneInput.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
         e.preventDefault();
-        consultSearchBtn.click();
+        lookupConsultHistory();
       }
     });
 
@@ -2015,7 +2122,7 @@ document.addEventListener("DOMContentLoaded", () => {
     return `${y}년 ${parseInt(m, 10)}월 ${parseInt(d, 10)}일`;
   }
 
-  const STATUS_ORDER = ["예정", "진행중", "보류", "완료"];
+  const STATUS_ORDER = ["예정", "진행중", "보류", "완료", "종료"];
   const activeStatusFilters = new Set();
   let boardSearchQuery = "";
   let boardRangeStart = "";
@@ -2077,6 +2184,7 @@ document.addEventListener("DOMContentLoaded", () => {
     "진행중": { bg: "#e2f0ff", color: "#3b8ef0" },
     "보류": { bg: "#fdeee0", color: "#f0883e" },
     "완료": { bg: "#e2f6ea", color: "#26b862" },
+    "종료": { bg: "#e9eaef", color: "#5c6270" },
   };
 
   function statusTagColor(status) {
@@ -2182,7 +2290,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function buildDeadlineAlerts(channelProjects) {
     return channelProjects
-      .filter((p) => (p.status || "진행중") !== "완료")
+      .filter((p) => !["완료", "종료"].includes(p.status || "진행중"))
       .map((p) => {
         const diff = getProjectDueDiffDays(p.dueDate);
         if (diff === null) return null;
@@ -2287,7 +2395,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!p) return;
     if (p.status === newStatus) return;
     p.status = newStatus;
-    if (newStatus === "완료") {
+    if (newStatus === "완료" || newStatus === "종료") {
       p.progress = 100;
     }
     saveProjects();
@@ -2766,10 +2874,6 @@ document.addEventListener("DOMContentLoaded", () => {
     } else if (preset === "nextMonth") {
       start.setTime(new Date(today.getFullYear(), today.getMonth() + 1, 1).getTime());
       end.setTime(new Date(today.getFullYear(), today.getMonth() + 2, 0).getTime());
-    } else if (preset === "next7") {
-      end.setDate(start.getDate() + 6);
-    } else if (preset === "next30") {
-      end.setDate(start.getDate() + 29);
     }
     return { start: toDateKey(start), end: toDateKey(end) };
   }
