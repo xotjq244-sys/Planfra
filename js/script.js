@@ -177,93 +177,172 @@ document.addEventListener("DOMContentLoaded", () => {
     smartstore: "--channel-smartstore",
     talkdeal: "--channel-talkdeal",
   };
-  const PIE_VIEW_W = 440;
-  const PIE_VIEW_H = 280;
-  const PIE_CX = 220;
-  const PIE_CY = 140;
-  const PIE_RADIUS = 76;
-  const PIE_LABEL_RADIUS = 110;
-  const PIE_SEPARATOR_WIDTH = 3;
+  const CHANNEL_SHARE_SOFT_VARS = {
+    coupang: "--channel-coupang-soft",
+    ownmall: "--channel-ownmall-soft",
+    smartstore: "--channel-smartstore-soft",
+    talkdeal: "--channel-talkdeal-soft",
+  };
+
+  // 넓은 면(도넛 조각·막대·아바타)은 연한 톤에서 원색으로 흐르는 그라디언트로 채운다
+  function channelFill(key, angle) {
+    return `linear-gradient(${angle}, var(${CHANNEL_SHARE_SOFT_VARS[key]}) 0%, var(${CHANNEL_SHARE_COLOR_VARS[key]}) 100%)`;
+  }
+  // 도넛은 하나의 원 위에 stroke-dasharray로 조각을 얹는 방식이라 100% 한 조각도 그대로 그려진다.
+  const DONUT_VIEW_W = 380;
+  const DONUT_VIEW_H = 240;
+  const DONUT_CX = DONUT_VIEW_W / 2;
+  const DONUT_CY = DONUT_VIEW_H / 2;
+  const DONUT_RADIUS = 58; // 링 중심선 반지름
+  const DONUT_THICKNESS = 23;
+  const DONUT_OUTER = DONUT_RADIUS + DONUT_THICKNESS / 2;
+  const DONUT_KNEE = DONUT_OUTER + 16; // 인출선이 꺾이는 지점
+  const DONUT_GAP = 7; // 조각 사이 여백(원둘레 단위). 끝이 둥글어 조금 넉넉해야 분리돼 보인다
+  const DONUT_CIRCUM = 2 * Math.PI * DONUT_RADIUS;
+  const DONUT_LABEL_GAP = 46; // 같은 쪽 라벨끼리 최소 세로 간격
 
   function formatWon(value) {
     return `${Math.round(value).toLocaleString("ko-KR")}원`;
   }
 
-  // 채널별 비중을 꽉 찬 파이 조각(중심각)으로 계산한다. 12시 방향(위)부터 시계방향으로 누적한다.
-  function buildPieSegments(values) {
+  // 채널별 비중을 12시 방향부터 시계방향으로 누적해 조각 길이/시작점을 구한다.
+  function buildDonutSegments(values) {
     const total = values.reduce((sum, v) => sum + v.value, 0);
     let cursor = 0;
-    return values.map((item) => {
+    const segments = values.map((item) => {
       const fraction = total > 0 ? item.value / total : 0;
-      const startAngle = cursor * 2 * Math.PI;
+      const offset = cursor;
       cursor += fraction;
-      const endAngle = cursor * 2 * Math.PI;
-      return { ...item, fraction, startAngle, endAngle };
+      return { ...item, fraction, offset };
     });
+    return { segments, total };
   }
 
-  function pieSlicePath(startAngle, endAngle) {
-    const x1 = PIE_CX + PIE_RADIUS * Math.sin(startAngle);
-    const y1 = PIE_CY - PIE_RADIUS * Math.cos(startAngle);
-    const x2 = PIE_CX + PIE_RADIUS * Math.sin(endAngle);
-    const y2 = PIE_CY - PIE_RADIUS * Math.cos(endAngle);
-    const largeArc = endAngle - startAngle > Math.PI ? 1 : 0;
-    return `M${PIE_CX},${PIE_CY} L${x1},${y1} A${PIE_RADIUS},${PIE_RADIUS} 0 ${largeArc} 1 ${x2},${y2} Z`;
+  // 같은 쪽(좌/우)에 몰린 라벨이 겹치지 않도록 세로 위치를 밀어낸다.
+  function spreadLabels(items, minY, maxY) {
+    items.sort((a, b) => a.y - b.y);
+    for (let i = 1; i < items.length; i++) {
+      if (items[i].y - items[i - 1].y < DONUT_LABEL_GAP) {
+        items[i].y = items[i - 1].y + DONUT_LABEL_GAP;
+      }
+    }
+    const overflow = items.length ? items[items.length - 1].y - maxY : 0;
+    if (overflow > 0) items.forEach((it) => (it.y -= overflow));
+    if (items.length && items[0].y < minY) {
+      const shift = minY - items[0].y;
+      items.forEach((it) => (it.y += shift));
+    }
   }
 
   function renderDonutCard(containerId, values, totalLabel) {
     const wrap = document.getElementById(containerId);
     if (!wrap) return;
-    const segments = buildPieSegments(values);
+    const { segments, total } = buildDonutSegments(values);
+    const visible = segments.filter((s) => s.fraction > 0);
+    // 조각이 하나뿐이면 여백을 두지 않아야 링이 끊기지 않는다
+    const gap = visible.length > 1 ? DONUT_GAP : 0;
 
-    // 온전한 원 하나(비중 100%)는 arc 플래그가 시작점=끝점이 되어 그려지지 않으므로 원으로 처리한다
-    const isSingleFullSlice = segments.filter((s) => s.fraction > 0).length === 1;
-
-    const slicesHtml = segments
+    // 그라디언트 id는 카드마다 달라야 하므로 컨테이너 id를 접두사로 붙인다.
+    // 방향은 조각이 그려지는 호를 따라가도록 시작점 → 끝점으로 잡는다. 좌표계는 아래
+    // rotate(-90) 이전 기준(3시 방향 시작)이며, 회전은 도형과 그라디언트에 함께 적용된다.
+    const gradId = (key) => `${containerId}-grad-${key}`;
+    const ringPoint = (fraction) => {
+      const theta = fraction * 2 * Math.PI;
+      return {
+        x: DONUT_CX + DONUT_RADIUS * Math.cos(theta),
+        y: DONUT_CY + DONUT_RADIUS * Math.sin(theta),
+      };
+    };
+    const defsHtml = visible
       .map((s) => {
-        const colorVar = `var(${CHANNEL_SHARE_COLOR_VARS[s.key]})`;
-        const d =
-          isSingleFullSlice && s.fraction > 0
-            ? `M${PIE_CX},${PIE_CY - PIE_RADIUS} A${PIE_RADIUS},${PIE_RADIUS} 0 1 1 ${PIE_CX - 0.01},${PIE_CY - PIE_RADIUS} Z`
-            : pieSlicePath(s.startAngle, s.endAngle);
+        // 한 조각이 원을 거의 다 차지하면 시작점과 끝점이 겹쳐 방향을 못 잡으므로 대각선으로 대체한다
+        const wide = s.fraction > 0.9;
+        const p0 = wide ? { x: 0, y: 0 } : ringPoint(s.offset);
+        const p1 = wide ? { x: DONUT_VIEW_W, y: DONUT_VIEW_H } : ringPoint(s.offset + s.fraction);
         return `
-          <path class="donut-seg" d="${d}" fill="${colorVar}">
-            <title>${escapeHtml(s.label)} ${(s.fraction * 100).toFixed(1)}% · ${formatWon(s.value)}</title>
-          </path>`;
+          <linearGradient id="${gradId(s.key)}" gradientUnits="userSpaceOnUse"
+            x1="${p0.x.toFixed(1)}" y1="${p0.y.toFixed(1)}" x2="${p1.x.toFixed(1)}" y2="${p1.y.toFixed(1)}">
+            <stop offset="0%" stop-color="var(${CHANNEL_SHARE_SOFT_VARS[s.key]})" />
+            <stop offset="100%" stop-color="var(${CHANNEL_SHARE_COLOR_VARS[s.key]})" />
+          </linearGradient>`;
       })
       .join("");
 
-    // 각 조각 가장자리에서 바깥 라벨까지 인출선(leader line)을 그어 조각과 라벨을 명확히 연결한다.
-    const calloutsHtml = segments
-      .filter((s) => s.fraction > 0)
+    // stroke-linecap:round 는 dash 양끝에 반지름 T/2 만큼 잉크를 더 얹는다.
+    // 그래서 dash 길이에서 두께만큼 빼고 시작점을 T/2 밀어야 실제 잉크가 제 비중을 차지한다.
+    const cap = DONUT_THICKNESS / 2;
+    const arcsHtml = visible
       .map((s) => {
-        const mid = (s.startAngle + s.endAngle) / 2;
-        const sinM = Math.sin(mid);
-        const cosM = Math.cos(mid);
-        const edgeX = PIE_CX + (PIE_RADIUS + 4) * sinM;
-        const edgeY = PIE_CY - (PIE_RADIUS + 4) * cosM;
-        const dotX = PIE_CX + PIE_LABEL_RADIUS * sinM;
-        const dotY = PIE_CY - PIE_LABEL_RADIUS * cosM;
-        const isRight = sinM >= 0;
-        const textX = dotX + (isRight ? 8 : -8);
-        const anchor = isRight ? "start" : "end";
-        const colorVar = `var(${CHANNEL_SHARE_COLOR_VARS[s.key]})`;
+        const arcLen = s.fraction * DONUT_CIRCUM;
+        const startArc = s.offset * DONUT_CIRCUM;
+        let dashLen = arcLen - gap - DONUT_THICKNESS;
+        let dashStart = startArc + gap / 2 + cap;
+        if (dashLen < 0.5) {
+          // 캡만으로도 넘칠 만큼 작은 조각은 가운데에 동그란 점 하나로 남긴다
+          dashLen = 0.5;
+          dashStart = startArc + arcLen / 2;
+        }
+        return `
+          <circle class="donut-seg" cx="${DONUT_CX}" cy="${DONUT_CY}" r="${DONUT_RADIUS}"
+            fill="none" stroke="url(#${gradId(s.key)})" stroke-width="${DONUT_THICKNESS}"
+            stroke-linecap="round"
+            stroke-dasharray="${dashLen.toFixed(2)} ${(DONUT_CIRCUM - dashLen).toFixed(2)}"
+            stroke-dashoffset="${(-dashStart).toFixed(2)}">
+            <title>${escapeHtml(s.label)} ${(s.fraction * 100).toFixed(1)}% · ${formatWon(s.value)}</title>
+          </circle>`;
+      })
+      .join("");
+
+    // 라벨은 각 조각이 향하는 방향(중심각)에 놓아 색과 이름이 바로 이어지게 한다.
+    const marks = visible.map((s) => {
+      const mid = (s.offset + s.fraction / 2) * 2 * Math.PI;
+      const sinM = Math.sin(mid);
+      const cosM = Math.cos(mid);
+      return {
+        seg: s,
+        sinM,
+        cosM,
+        dir: sinM >= 0 ? 1 : -1,
+        y: DONUT_CY - DONUT_KNEE * cosM,
+      };
+    });
+    spreadLabels(marks.filter((m) => m.dir > 0), 26, DONUT_VIEW_H - 26);
+    spreadLabels(marks.filter((m) => m.dir < 0), 26, DONUT_VIEW_H - 26);
+
+    const calloutsHtml = marks
+      .map((m) => {
+        const s = m.seg;
+        const color = `var(${CHANNEL_SHARE_COLOR_VARS[s.key]})`;
+        const edgeX = DONUT_CX + (DONUT_OUTER + 3) * m.sinM;
+        const edgeY = DONUT_CY - (DONUT_OUTER + 3) * m.cosM;
+        const kneeX = DONUT_CX + DONUT_KNEE * m.sinM;
+        const endX = kneeX + m.dir * 12;
+        const textX = endX + m.dir * 6;
+        const anchor = m.dir > 0 ? "start" : "end";
         return `
           <g class="donut-callout">
-            <line x1="${edgeX.toFixed(2)}" y1="${edgeY.toFixed(2)}" x2="${dotX.toFixed(2)}" y2="${dotY.toFixed(2)}" stroke="${colorVar}" stroke-width="1.6" />
-            <circle cx="${dotX.toFixed(2)}" cy="${dotY.toFixed(2)}" r="3" fill="${colorVar}" />
-            <text x="${textX.toFixed(2)}" y="${(dotY - 4).toFixed(2)}" text-anchor="${anchor}" class="donut-callout-label">${escapeHtml(s.label)}</text>
-            <text x="${textX.toFixed(2)}" y="${(dotY + 16).toFixed(2)}" text-anchor="${anchor}" class="donut-callout-pct">${(s.fraction * 100).toFixed(1)}%</text>
+            <polyline points="${edgeX.toFixed(1)},${edgeY.toFixed(1)} ${kneeX.toFixed(1)},${m.y.toFixed(1)} ${endX.toFixed(1)},${m.y.toFixed(1)}"
+              fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.75" />
+            <circle cx="${endX.toFixed(1)}" cy="${m.y.toFixed(1)}" r="2.4" fill="${color}" />
+            <text class="donut-callout-name" x="${textX.toFixed(1)}" y="${(m.y - 10).toFixed(1)}" text-anchor="${anchor}">${escapeHtml(s.label)}</text>
+            <text class="donut-callout-pct" x="${textX.toFixed(1)}" y="${(m.y + 6).toFixed(1)}" text-anchor="${anchor}">${(s.fraction * 100).toFixed(1)}%</text>
+            <text class="donut-callout-amount" x="${textX.toFixed(1)}" y="${(m.y + 19).toFixed(1)}" text-anchor="${anchor}">${acCompactWon(s.value)}원</text>
           </g>`;
       })
       .join("");
 
     wrap.innerHTML = `
       <div class="donut-visual">
-        <svg viewBox="0 0 ${PIE_VIEW_W} ${PIE_VIEW_H}" class="donut-svg" role="img" aria-label="${escapeHtml(totalLabel)} 채널별 비중">
-          <g stroke="var(--card-bg)" stroke-width="${PIE_SEPARATOR_WIDTH}" stroke-linejoin="round">${slicesHtml}</g>
+        <svg viewBox="0 0 ${DONUT_VIEW_W} ${DONUT_VIEW_H}" class="donut-svg" role="img" aria-label="${escapeHtml(totalLabel)} 채널별 비중">
+          <defs>${defsHtml}</defs>
+          <circle class="donut-track" cx="${DONUT_CX}" cy="${DONUT_CY}" r="${DONUT_RADIUS}" fill="none" stroke-width="${DONUT_THICKNESS}" />
+          <g transform="rotate(-90 ${DONUT_CX} ${DONUT_CY})">${arcsHtml}</g>
           ${calloutsHtml}
         </svg>
+        <div class="donut-center">
+          <span class="donut-center-label">${escapeHtml(totalLabel)}</span>
+          <span class="donut-center-value">${acCompactWon(total)}원</span>
+        </div>
       </div>
     `;
   }
@@ -283,6 +362,362 @@ document.addEventListener("DOMContentLoaded", () => {
     renderDonutCard("adCostShareDonut", adCostValues, "전체광고비");
   }
 
+  // ---------- 전체판매처 분석 대시보드 (매출 추이 / 인사이트 / 랭킹 / 광고 집행 / 요약 / 지표) ----------
+  // 아직 실데이터 연동 전이라 목업 기준값을 쓰며, 기간 의존 지표는 기존 도넛과 동일하게
+  // getScaledChannelStats()로 선택 기간에 맞춰 환산한다.
+
+  // 매출 추이는 자체 기간 탭(월/주/일)으로 보므로 상단 날짜 필터와 별개로 동작한다.
+  const AC_TREND_DATA = {
+    monthly: {
+      labels: ["1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월"],
+      total: [31200, 33800, 36400, 35100, 41800, 44600, 47300, 50900, 54510],
+      ad: [9800, 10600, 12100, 11400, 13900, 15200, 15800, 16900, 17900],
+    },
+    weekly: {
+      labels: ["1주", "2주", "3주", "4주", "5주", "6주", "7주", "8주"],
+      total: [10800, 11600, 11100, 12400, 12900, 13600, 13200, 14300],
+      ad: [3400, 3700, 3500, 4100, 4300, 4600, 4400, 4900],
+    },
+    daily: {
+      labels: ["월", "화", "수", "목", "금", "토", "일"],
+      total: [1620, 1740, 1580, 1890, 2140, 2380, 1970],
+      ad: [510, 560, 490, 610, 720, 810, 640],
+    },
+  };
+  // 목업 배열은 만원 단위라 원 단위로 되돌려 쓴다
+  const AC_TREND_UNIT = 10000;
+  let acTrendPeriod = "monthly";
+
+  const AC_CHART = { w: 760, h: 300, padT: 18, padR: 18, padB: 34, padL: 58 };
+  const AC_GRID_COUNT = 4;
+  const AC_NICE_STEPS = [1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10];
+
+  // value 이상이면서 사람이 읽기 좋은(1·1.5·2·2.5·… ×10ⁿ) 가장 작은 눈금값을 돌려준다
+  function acNiceStep(value) {
+    if (!(value > 0)) return 1;
+    const magnitude = Math.pow(10, Math.floor(Math.log10(value)));
+    const ratio = value / magnitude;
+    const pick = AC_NICE_STEPS.find((s) => s >= ratio - 1e-9) || 10;
+    return pick * magnitude;
+  }
+
+  // 축 눈금·도넛 중앙처럼 좁은 자리에는 억/만 단위로 줄여 쓴다.
+  // 100만 미만은 반올림 오차가 커 보이므로 소수 첫째 자리까지 남긴다(135,000 → 13.5만).
+  function acCompactWon(value) {
+    if (value >= 100000000) return `${(value / 100000000).toFixed(1)}억`;
+    if (value >= 1000000) return `${Math.round(value / 10000).toLocaleString("ko-KR")}만`;
+    if (value >= 10000) return `${(value / 10000).toFixed(1)}만`;
+    return Math.round(value).toLocaleString("ko-KR");
+  }
+
+  // Catmull-Rom 제어점을 베지어로 바꿔 꺾임 없는 추이선을 그린다
+  function acSmoothPath(points) {
+    if (points.length < 2) return "";
+    let d = `M${points[0].x.toFixed(1)},${points[0].y.toFixed(1)}`;
+    for (let i = 0; i < points.length - 1; i++) {
+      const p0 = points[i - 1] || points[i];
+      const p1 = points[i];
+      const p2 = points[i + 1];
+      const p3 = points[i + 2] || p2;
+      const c1x = p1.x + (p2.x - p0.x) / 6;
+      const c1y = p1.y + (p2.y - p0.y) / 6;
+      const c2x = p2.x - (p3.x - p1.x) / 6;
+      const c2y = p2.y - (p3.y - p1.y) / 6;
+      d += ` C${c1x.toFixed(1)},${c1y.toFixed(1)} ${c2x.toFixed(1)},${c2y.toFixed(1)} ${p2.x.toFixed(1)},${p2.y.toFixed(1)}`;
+    }
+    return d;
+  }
+
+  function renderAcTrendChart() {
+    const wrap = document.getElementById("acTrendChart");
+    if (!wrap) return;
+    const data = AC_TREND_DATA[acTrendPeriod];
+    const totals = data.total.map((v) => v * AC_TREND_UNIT);
+    const ads = data.ad.map((v) => v * AC_TREND_UNIT);
+
+    const { w, h, padT, padR, padB, padL } = AC_CHART;
+    const plotW = w - padL - padR;
+    const plotH = h - padT - padB;
+    // 눈금값이 딱 떨어지면서도 최고점 위 여백이 과하지 않도록 눈금 간격을 고른다
+    const rawMax = Math.max(...totals);
+    const maxY = acNiceStep((rawMax * 1.05) / AC_GRID_COUNT) * AC_GRID_COUNT;
+
+    const xAt = (i) => padL + (data.labels.length === 1 ? plotW / 2 : (plotW * i) / (data.labels.length - 1));
+    const yAt = (v) => padT + plotH - (v / maxY) * plotH;
+
+    const totalPts = totals.map((v, i) => ({ x: xAt(i), y: yAt(v) }));
+    const adPts = ads.map((v, i) => ({ x: xAt(i), y: yAt(v) }));
+
+    let gridHtml = "";
+    for (let g = 0; g <= AC_GRID_COUNT; g++) {
+      const value = (maxY / AC_GRID_COUNT) * g;
+      const y = yAt(value);
+      gridHtml += `<line class="ac-grid-line" x1="${padL}" y1="${y.toFixed(1)}" x2="${w - padR}" y2="${y.toFixed(1)}" />`;
+      gridHtml += `<text class="ac-axis-text" x="${padL - 10}" y="${(y + 4).toFixed(1)}" text-anchor="end">${acCompactWon(value)}</text>`;
+    }
+
+    const xLabelsHtml = data.labels
+      .map((label, i) => `<text class="ac-axis-text" x="${xAt(i).toFixed(1)}" y="${h - 10}" text-anchor="middle">${escapeHtml(label)}</text>`)
+      .join("");
+
+    const areaPath = `${acSmoothPath(totalPts)} L${totalPts[totalPts.length - 1].x.toFixed(1)},${padT + plotH} L${totalPts[0].x.toFixed(1)},${padT + plotH} Z`;
+
+    const bandW = plotW / Math.max(data.labels.length - 1, 1);
+    const hotspotsHtml = data.labels
+      .map((label, i) => {
+        const p = totalPts[i];
+        const tipW = 128;
+        const tipX = Math.min(Math.max(p.x - tipW / 2, padL), w - padR - tipW);
+        const tipY = Math.max(p.y - 62, 2);
+        return `
+          <g>
+            <rect class="ac-trend-hit" x="${(p.x - bandW / 2).toFixed(1)}" y="${padT}" width="${bandW.toFixed(1)}" height="${plotH}" />
+            <g class="ac-trend-tip">
+              <rect class="ac-trend-tip-box" x="${tipX.toFixed(1)}" y="${tipY.toFixed(1)}" width="${tipW}" height="52" rx="8" />
+              <text class="ac-trend-tip-text" x="${(tipX + 11).toFixed(1)}" y="${(tipY + 20).toFixed(1)}">${escapeHtml(label)} · ${acCompactWon(totals[i])}원</text>
+              <text class="ac-trend-tip-sub" x="${(tipX + 11).toFixed(1)}" y="${(tipY + 38).toFixed(1)}">광고매출 ${acCompactWon(ads[i])}원</text>
+            </g>
+          </g>`;
+      })
+      .join("");
+
+    const lastIdx = totalPts.length - 1;
+
+    wrap.innerHTML = `
+      <svg viewBox="0 0 ${w} ${h}" class="ac-trend-svg" role="img" aria-label="기간별 전체매출 및 광고매출 추이">
+        <defs>
+          <linearGradient id="acTrendFill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="var(--channel-coupang-soft)" stop-opacity="0.5" />
+            <stop offset="100%" stop-color="var(--channel-coupang-soft)" stop-opacity="0" />
+          </linearGradient>
+          <linearGradient id="acTrendTotalStroke" gradientUnits="userSpaceOnUse" x1="${padL}" y1="0" x2="${w - padR}" y2="0">
+            <stop offset="0%" stop-color="var(--channel-coupang-soft)" />
+            <stop offset="100%" stop-color="var(--channel-coupang)" />
+          </linearGradient>
+          <linearGradient id="acTrendAdStroke" gradientUnits="userSpaceOnUse" x1="${padL}" y1="0" x2="${w - padR}" y2="0">
+            <stop offset="0%" stop-color="var(--channel-talkdeal-soft)" />
+            <stop offset="100%" stop-color="var(--channel-talkdeal)" />
+          </linearGradient>
+        </defs>
+        ${gridHtml}
+        ${xLabelsHtml}
+        <path d="${areaPath}" fill="url(#acTrendFill)" />
+        <path class="ac-line-ad" d="${acSmoothPath(adPts)}" />
+        <path class="ac-line-total" d="${acSmoothPath(totalPts)}" />
+        <circle class="ac-trend-dot" cx="${totalPts[lastIdx].x.toFixed(1)}" cy="${totalPts[lastIdx].y.toFixed(1)}" r="5" />
+        ${hotspotsHtml}
+      </svg>
+    `;
+  }
+
+  // ---- 채널 인사이트 ----
+  const AC_INSIGHT_ICONS = {
+    trend: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M3 17L9 11L13 15L21 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 7H21V13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+    warn: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 4L21 19H3L12 4Z" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M12 10V14M12 16.5V17" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>`,
+    money: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.9"/><path d="M9 9l3 4 3-4M9 14h6M9 16.5h6M12 13v4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+    time: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.9"/><path d="M12 7v5.2l3.3 2" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+  };
+
+  const AC_INSIGHTS = [
+    {
+      icon: "trend",
+      tone: "ac-tone-primary",
+      title: "스마트스토어 ROAS 최고치",
+      desc: "ROAS 473%로 전체 채널 중 1위입니다. 광고비를 늘려도 효율이 유지될 여지가 있습니다.",
+    },
+    {
+      icon: "warn",
+      tone: "ac-tone-warning",
+      title: "자사몰 효율 저하",
+      desc: "ROAS 363%로 전체 평균(442%)을 밑돕니다. 소재·키워드 점검이 필요합니다.",
+    },
+    {
+      icon: "money",
+      tone: "ac-tone-success",
+      title: "쿠팡 매출 비중 확대",
+      desc: "전체매출의 33.6%를 차지하며 전월 대비 비중이 늘었습니다.",
+    },
+    {
+      icon: "time",
+      tone: "ac-tone-info",
+      title: "톡딜 예산 여유",
+      desc: "광고비 42만원으로 집행 규모가 가장 작습니다. 테스트 예산을 배분해볼 시점입니다.",
+    },
+  ];
+
+  function renderAcInsights() {
+    const list = document.getElementById("acInsightList");
+    if (!list) return;
+    list.innerHTML = AC_INSIGHTS.map(
+      (item) => `
+      <li class="ac-insight-item">
+        <span class="ac-insight-icon ${item.tone}">${AC_INSIGHT_ICONS[item.icon]}</span>
+        <div class="ac-insight-body">
+          <p class="ac-insight-title">${escapeHtml(item.title)}</p>
+          <p class="ac-insight-desc">${escapeHtml(item.desc)}</p>
+        </div>
+      </li>`
+    ).join("");
+  }
+
+  // ---- 채널별 매출 랭킹 ----
+  function renderAcChannelRank() {
+    const list = document.getElementById("acChannelRank");
+    if (!list) return;
+    const rows = CHANNEL_SHARE_ORDER.map((key) => {
+      const stats = getScaledChannelStats(key);
+      return { key, label: CHANNEL_LABELS[key], revenue: stats.totalRevenue, roas: stats.roas };
+    }).sort((a, b) => b.revenue - a.revenue);
+
+    const total = rows.reduce((sum, r) => sum + r.revenue, 0);
+
+    list.innerHTML = rows
+      .map((r) => {
+        // 막대 길이는 전체 대비 비중과 그대로 일치시킨다(트랙 전체 = 100%)
+        const share = total > 0 ? (r.revenue / total) * 100 : 0;
+        return `
+        <li class="ac-rank-item">
+          <div class="ac-rank-head">
+            <span class="ac-rank-name">${escapeHtml(r.label)}</span>
+            <span class="ac-rank-pct">${share.toFixed(1)}%</span>
+          </div>
+          <div class="ac-rank-bar"><div class="ac-rank-fill" style="width:${share.toFixed(1)}%;background:${channelFill(r.key, "90deg")}"></div></div>
+          <div class="ac-rank-sub">${formatWon(r.revenue)} · ROAS ${r.roas.toLocaleString("ko-KR")}%</div>
+        </li>`;
+      })
+      .join("");
+  }
+
+  // ---- 최근 광고 집행 ----
+  const AC_RECENT_ADS = [
+    { channel: "smartstore", campaign: "쇼핑검색 · 여름 신상", cost: 480000, status: "집행중" },
+    { channel: "coupang", campaign: "매출최적화 · 베스트셀러", cost: 620000, status: "집행중" },
+    { channel: "ownmall", campaign: "메타 리타겟팅", cost: 310000, status: "검수중" },
+    { channel: "talkdeal", campaign: "톡딜 오픈 프로모션", cost: 180000, status: "예약" },
+    { channel: "coupang", campaign: "브랜드 상단 노출", cost: 240000, status: "종료" },
+  ];
+
+  const AC_AD_STATUS_STYLE = {
+    집행중: "background:var(--color-success-bg);color:var(--color-success-strong)",
+    검수중: "background:var(--color-warning-bg);color:var(--color-warning)",
+    예약: "background:var(--color-info-bg);color:var(--color-info)",
+    종료: "background:var(--content-bg);color:var(--text-muted)",
+  };
+
+  function renderAcRecentAds() {
+    const wrap = document.getElementById("acRecentAds");
+    if (!wrap) return;
+    const rowsHtml = AC_RECENT_ADS.map((ad) => {
+      const label = CHANNEL_LABELS[ad.channel];
+      return `
+      <div class="ac-table-row">
+        <div class="ac-cell-main">
+          <span class="ac-avatar" style="background:${channelFill(ad.channel, "135deg")}">${escapeHtml(label.slice(0, 2))}</span>
+          <div class="ac-cell-text">
+            <div class="ac-cell-title">${escapeHtml(ad.campaign)}</div>
+            <div class="ac-cell-sub">${escapeHtml(label)}</div>
+          </div>
+        </div>
+        <div class="ac-cell-cost">${formatWon(ad.cost)}</div>
+        <span class="ac-status" style="${AC_AD_STATUS_STYLE[ad.status] || ""}">${escapeHtml(ad.status)}</span>
+      </div>`;
+    }).join("");
+
+    wrap.innerHTML = `
+      <div class="ac-table-head"><span>캠페인</span><span>광고비</span><span>상태</span></div>
+      ${rowsHtml}
+    `;
+  }
+
+  // ---- 주문 요약 ----
+  // 목업 기준(30일)의 건수를 기간 길이에 비례해 환산하고, 비율 지표는 그대로 둔다.
+  const AC_ORDER_BASE = { orders: 1438, repeatRate: 41.7, cancelRate: 2.8 };
+
+  function renderAcOrderSummary() {
+    const wrap = document.getElementById("acOrderSummary");
+    if (!wrap) return;
+    const stats = getScaledChannelStats("allchannels");
+    const factor = channelRangeDayCount() / CHANNEL_BASELINE_DAYS;
+    const orders = Math.max(Math.round(AC_ORDER_BASE.orders * factor), 0);
+    const aov = orders > 0 ? stats.totalRevenue / orders : 0;
+
+    const tiles = [
+      { label: "주문 건수", value: `${orders.toLocaleString("ko-KR")}건`, delta: "+7.2%", up: true },
+      { label: "객단가", value: formatWon(aov), delta: "+11.9%", up: true },
+      { label: "재구매율", value: `${AC_ORDER_BASE.repeatRate}%`, delta: "+2.3%", up: true },
+      { label: "취소·반품률", value: `${AC_ORDER_BASE.cancelRate}%`, delta: "-0.4%", up: false },
+    ];
+
+    wrap.innerHTML = tiles
+      .map(
+        (t) => `
+      <div class="ac-tile">
+        <div class="ac-tile-label">${escapeHtml(t.label)}</div>
+        <div class="ac-tile-value">${escapeHtml(t.value)}</div>
+        <div class="ac-tile-delta ${t.up ? "ac-delta-up" : "ac-delta-down"}">${t.up ? "▲" : "▼"} ${escapeHtml(t.delta)}</div>
+      </div>`
+      )
+      .join("");
+  }
+
+  // ---- 핵심 성과 지표 ----
+  const AC_ROAS_TARGET = 600;
+
+  function renderAcPerfMetrics() {
+    const list = document.getElementById("acPerfMetrics");
+    if (!list) return;
+    const stats = getScaledChannelStats("allchannels");
+    const adShare = stats.totalRevenue > 0 ? (stats.adCost / stats.totalRevenue) * 100 : 0;
+    const adRevShare = stats.totalRevenue > 0 ? (stats.adRevenue / stats.totalRevenue) * 100 : 0;
+
+    // pct는 막대 길이(0~100)이자 표시값과 같은 척도다. 목표가 있는 지표만 목표 대비로 환산하고,
+    // 나머지는 비율 값을 그대로 써서 "숫자 = 막대 길이"가 어긋나지 않게 한다.
+    const metrics = [
+      { name: "ROAS 목표 달성률", value: `${stats.roas.toLocaleString("ko-KR")}% / ${AC_ROAS_TARGET}%`, pct: (stats.roas / AC_ROAS_TARGET) * 100, color: "--color-success" },
+      { name: "광고매출 기여도", value: `${adRevShare.toFixed(1)}%`, pct: adRevShare, color: "--channel-coupang", soft: "--color-indigo-soft" },
+      { name: "광고비 비율", value: `${adShare.toFixed(1)}%`, pct: adShare, color: "--color-warning" },
+      { name: "전환율", value: "4.86%", pct: 4.86, color: "--color-info" },
+      { name: "예산 소진율", value: "78.3%", pct: 78.3, color: "--color-violet" },
+    ];
+
+    list.innerHTML = metrics
+      .map((m) => {
+        const width = Math.max(Math.min(m.pct, 100), 0);
+        const base = `var(${m.color})`;
+        const soft = `var(${m.soft || m.color + "-soft"})`;
+        return `
+        <li class="ac-metric-item">
+          <div class="ac-metric-head">
+            <span class="ac-metric-name">${escapeHtml(m.name)}</span>
+            <span class="ac-metric-value" style="color:${base}">${escapeHtml(m.value)}</span>
+          </div>
+          <div class="ac-metric-bar"><div class="ac-metric-fill" style="width:${width.toFixed(1)}%;background:linear-gradient(90deg, ${soft} 0%, ${base} 100%)"></div></div>
+        </li>`;
+      })
+      .join("");
+  }
+
+  function renderAllChannelDashboard() {
+    renderAcTrendChart();
+    renderAcInsights();
+    renderAcChannelRank();
+    renderAcRecentAds();
+    renderAcOrderSummary();
+    renderAcPerfMetrics();
+  }
+
+  document.querySelectorAll("[data-trend-period]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      acTrendPeriod = btn.dataset.trendPeriod;
+      document.querySelectorAll("[data-trend-period]").forEach((b) => {
+        const on = b === btn;
+        b.classList.toggle("is-active", on);
+        b.setAttribute("aria-pressed", String(on));
+      });
+      renderAcTrendChart();
+    });
+  });
+
   // ---------- Channel Dashboard Date Filter (전체판매처 + 채널별 페이지 공통) ----------
   function formatChannelRangeLabel(start, end) {
     const compact = (d) => d.replace(/-/g, ".");
@@ -301,6 +736,10 @@ document.addEventListener("DOMContentLoaded", () => {
     document.querySelectorAll("[data-channel-range-btn]").forEach((el) => {
       el.classList.toggle("is-active", active);
     });
+    // 분석 카드 헤더의 기간 칩도 상단 날짜 필터와 같은 값을 보여준다
+    document.querySelectorAll("[data-ac-range-chip]").forEach((el) => {
+      el.textContent = label;
+    });
   }
 
   function applyChannelRange(start, end) {
@@ -309,6 +748,7 @@ document.addEventListener("DOMContentLoaded", () => {
     saveChannelRange();
     syncChannelRangeButtons();
     renderChannelShareDonuts();
+    renderAllChannelDashboard();
     const activePage = document.querySelector(".page:not([hidden])");
     if (activePage) {
       const channel = activePage.id.replace("page-", "");
@@ -670,18 +1110,24 @@ document.addEventListener("DOMContentLoaded", () => {
   // 긴급 프로젝트: 우선순위가 "긴급"이고 마감까지 1일 이내인 미완료 프로젝트
   // 마감 3일 이내 프로젝트: 마감까지 3일 이내로 남은 미완료 프로젝트
   // 미완료 프로젝트: 상태가 "완료"·"종료"가 아닌 프로젝트 전체
-  let projectStatGroups = { overdue: [], soon: [], urgent: [], incomplete: [] };
+  // 예정 프로젝트: 상태가 "예정"인 프로젝트 전체
+  // 이번달 종료 프로젝트: 이번 달에 "종료" 처리된 프로젝트
+  let projectStatGroups = { overdue: [], soon: [], urgent: [], incomplete: [], scheduled: [], closedThisMonth: [] };
   const STAT_FILTER_LABELS = {
     overdue: "지연된 프로젝트",
     urgent: "긴급 프로젝트",
     soon: "마감 3일 이내 프로젝트",
     incomplete: "미완료 프로젝트",
+    scheduled: "예정 프로젝트",
+    closedThisMonth: "이번달 종료 프로젝트",
   };
   const STAT_FILTER_DESCRIPTIONS = {
     overdue: "마감기한이 지났는데 아직 완료 처리되지 않은 프로젝트",
     urgent: "우선순위 '긴급' + 마감까지 1일 이내(오늘·내일) 남은 미완료 프로젝트",
     soon: "마감까지 3일 이내(마감 당일 포함) 남은 미완료 프로젝트",
     incomplete: "상태가 '완료'·'종료'가 아닌 전체 프로젝트",
+    scheduled: "아직 시작하지 않은 상태가 '예정'인 프로젝트",
+    closedThisMonth: "이번 달에 '종료'로 처리된 프로젝트 (종료 기록이 없는 예전 데이터는 마감일 기준)",
   };
 
   function getProjectDueDiffDays(dueDate) {
@@ -692,12 +1138,28 @@ document.addEventListener("DOMContentLoaded", () => {
     return Math.round((due - today) / 86400000);
   }
 
+  // 종료 시각(closedAt)이 없던 예전 데이터는 마감일(dueDate)을 종료 시점으로 간주한다
+  function getProjectClosedDate(p) {
+    const raw = p.closedAt || p.dueDate;
+    if (!raw) return null;
+    const d = new Date(raw.length === 10 ? raw + "T00:00:00" : raw);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+
+  function isInCurrentMonth(date) {
+    if (!date) return false;
+    const now = new Date();
+    return date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth();
+  }
+
   function renderProjectDashboardStats() {
     const statOverdue = document.getElementById("statOverdueCount");
     const statToday = document.getElementById("statTodayCount");
     const statSoon = document.getElementById("statSoonCount");
     const statPending = document.getElementById("statPendingCount");
-    if (!statOverdue && !statToday && !statSoon && !statPending) return;
+    const statScheduled = document.getElementById("statScheduledCount");
+    const statClosedMonth = document.getElementById("statClosedMonthCount");
+    if (!statOverdue && !statToday && !statSoon && !statPending && !statScheduled && !statClosedMonth) return;
 
     const incomplete = projects.filter((p) => !["완료", "종료"].includes(p.status || "진행중"));
 
@@ -717,16 +1179,26 @@ document.addEventListener("DOMContentLoaded", () => {
       return diff !== null && diff <= 1;
     });
 
+    const scheduledProjects = projects.filter((p) => (p.status || "진행중") === "예정");
+
+    const closedThisMonthProjects = projects.filter(
+      (p) => (p.status || "진행중") === "종료" && isInCurrentMonth(getProjectClosedDate(p))
+    );
+
     if (statOverdue) statOverdue.textContent = overdueProjects.length;
     if (statToday) statToday.textContent = urgentAlertProjects.length;
     if (statSoon) statSoon.textContent = soonProjects.length;
     if (statPending) statPending.textContent = incomplete.length;
+    if (statScheduled) statScheduled.textContent = scheduledProjects.length;
+    if (statClosedMonth) statClosedMonth.textContent = closedThisMonthProjects.length;
 
     projectStatGroups = {
       overdue: overdueProjects,
       urgent: urgentAlertProjects,
       soon: soonProjects,
       incomplete,
+      scheduled: scheduledProjects,
+      closedThisMonth: closedThisMonthProjects,
     };
   }
 
@@ -2355,8 +2827,17 @@ document.addEventListener("DOMContentLoaded", () => {
     Object.keys(CHANNEL_LABELS).forEach(renderChannelBoard);
   }
 
+  // '종료'로 바뀌는 순간을 기록해 '이번달 종료 프로젝트' 집계 기준으로 쓴다
+  function stampClosedAt(project, nextStatus) {
+    if (nextStatus === "종료") {
+      if (project.status !== "종료" || !project.closedAt) project.closedAt = new Date().toISOString();
+    } else {
+      delete project.closedAt;
+    }
+  }
+
   function addProject(title, dueDate, tags, status, priority, progress, note, channel) {
-    projects.push({
+    const project = {
       id: `p${Date.now()}${Math.random().toString(16).slice(2, 6)}`,
       title,
       dueDate,
@@ -2367,7 +2848,9 @@ document.addEventListener("DOMContentLoaded", () => {
       note,
       channel,
       createdAt: new Date().toISOString(),
-    });
+    };
+    if (status === "종료") project.closedAt = project.createdAt;
+    projects.push(project);
     saveProjects();
   }
 
@@ -2377,6 +2860,7 @@ document.addEventListener("DOMContentLoaded", () => {
     p.title = title;
     p.dueDate = dueDate;
     p.tags = tags;
+    stampClosedAt(p, status);
     p.status = status;
     p.priority = priority;
     p.progress = progress;
@@ -2394,6 +2878,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const p = projects.find((item) => item.id === id);
     if (!p) return;
     if (p.status === newStatus) return;
+    stampClosedAt(p, newStatus);
     p.status = newStatus;
     if (newStatus === "완료" || newStatus === "종료") {
       p.progress = 100;
@@ -3017,6 +3502,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   renderBoard();
   renderChannelShareDonuts();
+  renderAllChannelDashboard();
 
   // ---------- System Status Modal (mock) ----------
   const SYSTEM_STATUS = {

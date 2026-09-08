@@ -1,8 +1,18 @@
 :root {
-  --sidebar-w: 220px;
+  --sidebar-w: 200px;
   --sidebar-w-collapsed: 60px;
   --sidebar-grad-start: #8983e0;
   --sidebar-grad-end: #766fd6;
+  /* 브랜드 그라디언트: 인디고 바이올렛 -> 연보라 (은은한 색상 이동) */
+  --brand-1: #7b73e3;
+  --brand-2: #8f83de;
+  --brand-3: #ab97d9;
+  --brand-gradient: linear-gradient(135deg, var(--brand-1) 0%, var(--brand-2) 52%, var(--brand-3) 100%);
+  --brand-gradient-v: linear-gradient(160deg, var(--brand-1) 0%, var(--brand-2) 52%, var(--brand-3) 100%);
+  --brand-gradient-h: linear-gradient(90deg, var(--brand-1) 0%, var(--brand-2) 52%, var(--brand-3) 100%);
+  /* 버튼·배지 등 작은 면: 그라디언트가 안 펼쳐지므로 단색 사용 */
+  --brand-solid: var(--brand-2);
+  --brand-solid-hover: var(--brand-1);
   --sidebar-text: rgba(255, 255, 255, 0.75);
   --sidebar-text-active: #ffffff;
   --sidebar-hover-bg: rgba(255, 255, 255, 0.12);
@@ -18,6 +28,13 @@
   --channel-ownmall: #26b862;
   --channel-smartstore: #f0883e;
   --channel-talkdeal: #3b8ef0;
+
+  /* 차트 채움용 연한 톤. 배지·아이콘 같은 식별 요소는 위의 진한 원색을 그대로 쓰고,
+     면적이 큰 도넛·막대에만 (연한 톤 → 원색) 그라디언트를 얹어 화면을 가볍게 유지한다. */
+  --channel-coupang-soft: #bcb8f0;
+  --channel-ownmall-soft: #7fdcaa;
+  --channel-smartstore-soft: #fac296;
+  --channel-talkdeal-soft: #97c6f9;
 
   /* Typography */
   --font-sans: "Inter", "Noto Sans KR", "Malgun Gothic", "Apple SD Gothic Neo", -apple-system, BlinkMacSystemFont, sans-serif;
@@ -46,6 +63,14 @@
 
   --color-teal: #17a589;
   --color-teal-bg: #e2fbf6;
+
+  /* 지표 막대에 쓰는 연한 짝 (위 semantic 색과 1:1로 대응) */
+  --color-primary-soft: #a3bbf7;
+  --color-info-soft: #97c6f9;
+  --color-warning-soft: #fac296;
+  --color-success-soft: #7fdcaa;
+  --color-violet-soft: #bdaeff;
+  --color-indigo-soft: #b6b1ea;
 }
 
 * {
@@ -85,7 +110,7 @@ ul {
 .sidebar {
   width: var(--sidebar-w);
   flex-shrink: 0;
-  background: linear-gradient(180deg, var(--sidebar-grad-start) 0%, var(--sidebar-grad-end) 100%);
+  background: var(--brand-gradient-v);
   color: var(--sidebar-text);
   display: flex;
   flex-direction: column;
@@ -103,28 +128,21 @@ ul {
 
 .sidebar-header {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 24px 14px 20px;
-  flex-shrink: 0;
-}
-
-.header-spacer {
-  width: 30px;
+  padding: 0 14px 20px;
   flex-shrink: 0;
 }
 
 .logo-full {
-  flex: 1;
+  flex: none;
   min-width: 0;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
 }
 
 .logo-text {
-  width: 112px;
+  width: 105px;
   height: 19px;
   flex-shrink: 0;
   background-image: url("../assets/LOGO3.png");
@@ -150,20 +168,15 @@ ul {
 }
 
 .sidebar.collapsed .sidebar-header {
-  flex-direction: column;
-  gap: 10px;
-  padding: 20px 10px;
+  align-items: center;
+  padding: 0 0 14px;
 }
 
-.sidebar.collapsed .header-spacer {
-  display: none;
+.sidebar.collapsed .collapse-btn {
+  margin-bottom: 0;
 }
 
 .sidebar.collapsed .logo-full {
-  flex: none;
-}
-
-.sidebar.collapsed .logo-text {
   display: none;
 }
 
@@ -175,8 +188,9 @@ ul {
 .theme-toggle {
   display: flex;
   align-items: center;
+  justify-content: flex-start;
   gap: 10px;
-  padding: 10px 12px;
+  padding: 10px;
   border-radius: 10px;
   color: var(--sidebar-text);
   cursor: pointer;
@@ -194,13 +208,6 @@ ul {
   justify-content: center;
   flex-shrink: 0;
   width: 18px;
-}
-
-.theme-toggle-label {
-  flex: 1;
-  min-width: 0;
-  font-size: 13.5px;
-  font-weight: 500;
 }
 
 .theme-toggle-input {
@@ -251,6 +258,7 @@ ul {
 
 .sidebar.collapsed .theme-toggle {
   flex-direction: column;
+  justify-content: center;
   gap: 8px;
   padding: 10px 0;
 }
@@ -272,6 +280,7 @@ ul {
 }
 
 .collapse-btn {
+  margin: 19px 0 22px;
   background: transparent;
   border: none;
   color: var(--sidebar-text);
@@ -283,6 +292,14 @@ ul {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+}
+
+.collapse-btn svg {
+  transition: transform 0.2s ease;
+}
+
+.sidebar.collapsed .collapse-btn svg {
+  transform: rotate(180deg);
 }
 
 .collapse-btn:hover {
@@ -306,7 +323,7 @@ ul {
 }
 
 .nav-section-label {
-  padding: 10px 10px 6px;
+  padding: 10px 10px 8px;
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.08em;
@@ -379,12 +396,9 @@ ul {
 .nav-chevron {
   display: flex;
   align-items: center;
+  opacity: 0.75;
   transition: transform 0.2s ease;
   flex-shrink: 0;
-}
-
-.submenu-toggle .nav-label {
-  flex: 0 1 auto;
 }
 
 .nav-item.open > .nav-link .nav-chevron {
@@ -395,18 +409,19 @@ ul {
   max-height: 0;
   overflow: hidden;
   transition: max-height 0.2s ease;
-  padding-left: 42px;
+  padding: 0 10px 0 28px;
 }
 
 .nav-item.open > .submenu {
-  max-height: 200px;
+  max-height: 240px;
+  padding: 2px 10px 6px 28px;
 }
 
 .submenu li a {
   display: block;
-  padding: 8px 10px;
+  padding: 7px 10px;
   font-size: 13.5px;
-  color: var(--sidebar-text);
+  color: rgba(255, 255, 255, 0.62);
   border-radius: 8px;
 }
 
@@ -501,7 +516,7 @@ ul {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--sidebar-grad-start), var(--sidebar-grad-end));
+  background: var(--brand-gradient);
   color: #fff;
   display: flex;
   align-items: center;
@@ -613,14 +628,37 @@ ul {
 
 .stat-panel {
   flex: 1.8;
-  min-width: 340px;
+  min-width: 480px;
   display: flex;
   flex-direction: column;
   justify-content: center;
 }
 
+/* 카드를 위→아래로 먼저 채워, 같은 열에 2장씩 세로로 짝지어 놓는다
+   (지연/긴급 · 마감3일/미완료 · 예정/이번달 종료) */
 .stat-panel .stat-grid {
   margin-bottom: 0;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  grid-auto-flow: column;
+  gap: 14px;
+}
+
+/* 카드가 6개로 늘어 한 장의 폭이 좁아지므로 대시보드 상단 카드만 조금 촘촘하게 */
+.stat-panel .stat-card {
+  padding: 15px 14px;
+  gap: 11px;
+}
+
+.stat-panel .stat-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+}
+
+.stat-panel .stat-label {
+  font-size: 12px;
+  line-height: 1.35;
 }
 
 .clock-panel {
@@ -630,7 +668,7 @@ ul {
   align-items: flex-end;
   justify-content: center;
   gap: 6px;
-  background: linear-gradient(135deg, var(--sidebar-grad-start), var(--sidebar-grad-end));
+  background: var(--brand-gradient);
   border-radius: 18px;
   padding: 14px 24px;
   box-shadow: var(--shadow-card);
@@ -933,11 +971,11 @@ ul {
 }
 
 .btn-primary.quicknote-add-btn {
-  background: var(--sidebar-grad-start);
+  background: var(--brand-solid);
 }
 
 .btn-primary.quicknote-add-btn:hover {
-  background: var(--sidebar-grad-end);
+  background: var(--brand-solid-hover);
 }
 
 .quicknote-list {
@@ -1094,7 +1132,7 @@ ul {
 }
 
 .quicknote-page-btn.is-active {
-  background: var(--sidebar-grad-start);
+  background: var(--brand-solid);
   color: #fff;
 }
 
@@ -1258,7 +1296,7 @@ ul {
 }
 
 .toggle input:checked + .toggle-track {
-  background: var(--sidebar-grad-start);
+  background: var(--brand-solid);
   border-color: var(--sidebar-grad-start);
 }
 
@@ -1385,7 +1423,7 @@ ul {
 
 .rank-progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--sidebar-grad-start), var(--sidebar-grad-end));
+  background: var(--brand-gradient-h);
   border-radius: 4px;
 }
 
@@ -1540,7 +1578,7 @@ ul {
   padding: 0 4px;
   margin-left: 4px;
   border-radius: 10px;
-  background: var(--sidebar-grad-start);
+  background: var(--brand-solid);
   color: #fff;
   font-size: 10px;
   font-weight: 700;
@@ -1866,7 +1904,7 @@ body.board-dragging-active .board-card {
 
 .board-progress-fill {
   height: 100%;
-  background: var(--sidebar-grad-start);
+  background: var(--brand-gradient-h);
   border-radius: 4px;
 }
 
@@ -2029,13 +2067,13 @@ body.board-dragging-active .board-card {
 }
 
 .dp-day-selected {
-  background: var(--sidebar-grad-start);
+  background: var(--brand-solid);
   color: #fff;
   font-weight: 700;
 }
 
 .dp-day-selected:hover {
-  background: var(--sidebar-grad-end);
+  background: var(--brand-solid-hover);
 }
 
 .datepicker-footer {
@@ -2177,7 +2215,7 @@ body.board-dragging-active .board-card {
   align-items: center;
   gap: 8px;
   padding: 10px 10px 10px 14px;
-  background: linear-gradient(135deg, var(--sidebar-grad-start), var(--sidebar-grad-end));
+  background: var(--brand-solid);
   border-bottom: none;
 }
 
@@ -2599,46 +2637,31 @@ body.board-dragging-active .board-card {
 }
 
 /* ---------- Channel Share Donuts (매출/광고비 비중) ---------- */
+/* 도넛 2개 + 채널별 매출 랭킹이 한 줄에 선다 */
 .channel-share-row {
-  display: flex;
-  align-items: stretch;
-  gap: 18px;
-  flex-wrap: wrap;
-  margin-bottom: 22px;
-}
-
-.channel-share-panel {
-  flex: 1;
-  min-width: 320px;
-}
-
-.channel-share-panel .panel-header p {
-  margin: -8px 0 14px;
-  font-size: 12.5px;
-  color: var(--text-muted);
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
 }
 
 .donut-card {
+  flex: 1;
   display: flex;
   align-items: center;
-  justify-content: center;
 }
 
 .donut-visual {
+  position: relative;
   width: 100%;
-  max-width: 420px;
-  aspect-ratio: 440 / 280;
-  margin: 0 auto;
+  aspect-ratio: 380 / 240;
 }
 
 .donut-svg {
+  display: block;
   width: 100%;
   height: 100%;
-  overflow: visible;
 }
 
-.donut-svg text {
-  font-family: var(--font-sans);
+.donut-track {
+  stroke: var(--content-bg);
 }
 
 .donut-seg {
@@ -2646,23 +2669,61 @@ body.board-dragging-active .board-card {
 }
 
 .donut-card:hover .donut-seg {
-  opacity: 0.4;
+  opacity: 0.35;
 }
 
 .donut-card .donut-seg:hover {
   opacity: 1;
 }
 
-.donut-callout-label {
+.donut-svg text {
+  font-family: var(--font-sans);
+}
+
+/* 조각이 향하는 방향에 이름·비중을 놓고 인출선으로 잇는다 */
+.donut-callout-name {
   fill: var(--text-muted);
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 600;
 }
 
 .donut-callout-pct {
   fill: var(--text-main);
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.donut-callout-amount {
+  fill: var(--text-muted);
+  font-size: 10.5px;
+  font-weight: 600;
+}
+
+/* 링 가운데 합계. 도넛 조각 위에 겹치므로 마우스 이벤트는 통과시킨다 */
+.donut-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  pointer-events: none;
+  text-align: center;
+}
+
+.donut-center-label {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.donut-center-value {
   font-size: 17px;
   font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text-main);
+  font-variant-numeric: tabular-nums;
 }
 
 .deadline-alert-count {
@@ -2755,6 +2816,10 @@ body.board-dragging-active .board-card {
 @media (max-width: 1080px) {
   .stat-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+  .stat-panel .stat-grid {
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(3, 1fr);
   }
   .dashboard-work-row {
     flex-direction: column;
@@ -2963,14 +3028,14 @@ body.board-dragging-active .board-card {
 
 .dp-day-range-start,
 .dp-day-range-end {
-  background: var(--sidebar-grad-start);
+  background: var(--brand-solid);
   color: #fff;
   font-weight: 700;
 }
 
 .dp-day-range-start:hover,
 .dp-day-range-end:hover {
-  background: var(--sidebar-grad-end);
+  background: var(--brand-solid-hover);
 }
 
 .dp-day-range-start {
@@ -2990,24 +3055,35 @@ body.board-dragging-active .board-card {
   position: fixed;
   right: 28px;
   bottom: 28px;
-  width: 56px;
-  height: 56px;
+  width: 112px;
+  height: 112px;
   border-radius: 50%;
   border: none;
-  background: linear-gradient(135deg, var(--sidebar-grad-start), var(--sidebar-grad-end));
+  background: var(--brand-gradient);
   color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 10px 26px rgba(31, 26, 74, 0.28);
+  box-shadow: 0 16px 40px rgba(31, 26, 74, 0.28);
   z-index: 90;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
+.consult-fab-icon {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  transition: transform 0.3s cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+.consult-fab:hover .consult-fab-icon {
+  transform: scale(1.08);
+}
+
 .consult-fab:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 14px 32px rgba(31, 26, 74, 0.34);
+  transform: translateY(-3px);
+  box-shadow: 0 22px 48px rgba(31, 26, 74, 0.34);
 }
 
 /* ---------- Consultation Console (center modal) ---------- */
@@ -3204,13 +3280,13 @@ body.board-dragging-active .board-card {
 
 #consultAddRecordBtn,
 #consultSaveRecordBtn {
-  background: var(--sidebar-grad-start);
+  background: var(--brand-solid);
   border-color: var(--sidebar-grad-start);
 }
 
 #consultAddRecordBtn:hover,
 #consultSaveRecordBtn:hover {
-  background: var(--sidebar-grad-end);
+  background: var(--brand-solid-hover);
   border-color: var(--sidebar-grad-end);
 }
 
@@ -3519,6 +3595,9 @@ body.board-dragging-active .board-card {
   color-scheme: dark;
   --sidebar-grad-start: #2b2760;
   --sidebar-grad-end: #1c1a42;
+  --brand-1: #2b2760;
+  --brand-2: #322a62;
+  --brand-3: #3f316a;
   --content-bg: #14161f;
   --card-bg: #1e202b;
   --border-color: #2c2f3d;
@@ -3547,6 +3626,20 @@ body.board-dragging-active .board-card {
 
   --color-teal: #3fd0b3;
   --color-teal-bg: #123530;
+
+  /* 어두운 배경에서는 "연한 톤"이 흰색 쪽이 아니라 원색보다 한 단계 깊은 쪽이어야
+     그라디언트가 눈에 튀지 않는다 */
+  --channel-coupang-soft: #5f57b5;
+  --channel-ownmall-soft: #15703c;
+  --channel-smartstore-soft: #9c4a1d;
+  --channel-talkdeal-soft: #2a63ad;
+
+  --color-primary-soft: #2f5bb0;
+  --color-info-soft: #3f7cb4;
+  --color-warning-soft: #a86c3c;
+  --color-success-soft: #2b8f57;
+  --color-violet-soft: #6d5cb8;
+  --color-indigo-soft: #5f57b5;
 }
 
 :root[data-theme="dark"] .modal-overlay {
@@ -3698,4 +3791,508 @@ body.board-dragging-active .board-card {
 
 :root[data-theme="dark"] .auth-gate-logo {
   filter: none;
+}
+
+/* ---------- 전체판매처 분석 대시보드 (Analytics Cards) ---------- */
+.ac-row {
+  display: grid;
+  gap: 18px;
+  margin-bottom: 22px;
+}
+
+.ac-row-main {
+  grid-template-columns: minmax(0, 1.9fr) minmax(300px, 1fr);
+}
+
+.ac-row-sub {
+  grid-template-columns: repeat(auto-fit, minmax(272px, 1fr));
+}
+
+.ac-panel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.ac-panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.ac-panel-title h2 {
+  margin: 0;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ac-panel-title p {
+  margin: 5px 0 0;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+.ac-chip {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--content-bg);
+  border: 1px solid var(--border-color);
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.ac-chip-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--color-success-bg);
+  border-color: transparent;
+  color: var(--color-success-strong);
+}
+
+.ac-chip-live::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* ---- 매출 추이 라인 차트 ---- */
+.ac-seg {
+  display: inline-flex;
+  padding: 3px;
+  gap: 2px;
+  border-radius: 999px;
+  background: var(--content-bg);
+  border: 1px solid var(--border-color);
+}
+
+.ac-seg-btn {
+  border: 0;
+  background: transparent;
+  border-radius: 999px;
+  padding: 5px 13px;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.ac-seg-btn:hover {
+  color: var(--text-main);
+}
+
+.ac-seg-btn.is-active {
+  background: var(--card-bg);
+  color: var(--channel-coupang);
+  box-shadow: 0 1px 4px rgba(31, 26, 74, 0.1);
+}
+
+.ac-trend-chart {
+  flex: 1;
+  min-height: 0;
+}
+
+.ac-trend-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.ac-grid-line {
+  stroke: var(--border-color);
+  stroke-width: 1;
+}
+
+.ac-axis-text {
+  fill: var(--text-muted);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.ac-line-total {
+  fill: none;
+  stroke: url(#acTrendTotalStroke);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.ac-line-ad {
+  fill: none;
+  stroke: url(#acTrendAdStroke);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 5 4;
+}
+
+.ac-trend-dot {
+  fill: var(--card-bg);
+  stroke: var(--channel-coupang);
+  stroke-width: 2.4;
+}
+
+/* 각 데이터 지점 위의 투명한 히트 영역에 마우스를 올리면 해당 지점 정보가 나타난다 */
+.ac-trend-hit {
+  fill: transparent;
+  cursor: pointer;
+}
+
+.ac-trend-tip {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s ease;
+}
+
+.ac-trend-hit:hover + .ac-trend-tip {
+  opacity: 1;
+}
+
+.ac-trend-tip-box {
+  fill: var(--text-main);
+  rx: 8;
+}
+
+.ac-trend-tip-text {
+  fill: #fff;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.ac-trend-tip-sub {
+  fill: rgba(255, 255, 255, 0.72);
+  font-family: var(--font-sans);
+  font-size: 10.5px;
+  font-weight: 600;
+}
+
+.ac-trend-legend {
+  display: flex;
+  gap: 18px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-color);
+}
+
+.ac-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.ac-legend-dot {
+  width: 14px;
+  height: 3px;
+  border-radius: 2px;
+}
+
+.ac-legend-total { background: linear-gradient(90deg, var(--channel-coupang-soft), var(--channel-coupang)); }
+.ac-legend-ad { background: linear-gradient(90deg, var(--channel-talkdeal-soft), var(--channel-talkdeal)); }
+
+/* ---- 채널 인사이트 ---- */
+.ac-insight-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ac-insight-item {
+  display: flex;
+  gap: 11px;
+  padding: 11px 10px;
+  border-radius: 12px;
+  transition: background 0.15s ease;
+}
+
+.ac-insight-item:hover {
+  background: var(--content-bg);
+}
+
+.ac-insight-icon {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+}
+
+.ac-insight-body {
+  min-width: 0;
+}
+
+.ac-insight-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.ac-insight-desc {
+  margin: 3px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.ac-tone-primary { background: var(--color-violet-bg); color: var(--color-violet); }
+.ac-tone-success { background: var(--color-success-bg); color: var(--color-success-strong); }
+.ac-tone-warning { background: var(--color-warning-bg); color: var(--color-warning); }
+.ac-tone-danger  { background: var(--color-danger-bg);  color: var(--color-danger-strong); }
+.ac-tone-info    { background: var(--color-info-bg);    color: var(--color-info); }
+
+/* ---- 채널별 매출 랭킹 ---- */
+/* 한 줄에 놓인 카드들이 같은 높이로 늘어나므로, 목록도 남는 높이를 나눠 채운다 */
+.ac-rank-list {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 15px;
+}
+
+.ac-rank-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 7px;
+}
+
+.ac-rank-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-main);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ac-rank-pct {
+  flex-shrink: 0;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--text-main);
+  font-variant-numeric: tabular-nums;
+}
+
+.ac-rank-bar {
+  height: 7px;
+  border-radius: 999px;
+  background: var(--content-bg);
+  overflow: hidden;
+}
+
+.ac-rank-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.ac-rank-sub {
+  margin-top: 6px;
+  font-size: 11.5px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- 최근 광고 집행 테이블 ---- */
+.ac-table {
+  display: flex;
+  flex-direction: column;
+}
+
+.ac-table-head,
+.ac-table-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 62px;
+  align-items: center;
+  gap: 10px;
+}
+
+.ac-table-head {
+  padding-bottom: 9px;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.ac-table-head span:nth-child(2),
+.ac-table-row .ac-cell-cost {
+  text-align: right;
+}
+
+.ac-table-head span:nth-child(3) {
+  text-align: center;
+}
+
+.ac-table-row {
+  padding: 11px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.ac-table-row:last-child {
+  border-bottom: 0;
+}
+
+.ac-cell-main {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+
+.ac-avatar {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.ac-cell-text {
+  min-width: 0;
+}
+
+.ac-cell-title {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-main);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ac-cell-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ac-cell-cost {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text-main);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.ac-status {
+  justify-self: center;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* ---- 주문 요약 타일 ---- */
+.ac-tile-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: 1fr;
+  gap: 14px;
+}
+
+.ac-tile {
+  padding: 13px;
+  border-radius: 12px;
+  background: var(--content-bg);
+}
+
+.ac-tile-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.ac-tile-value {
+  margin-top: 5px;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.ac-tile-delta {
+  margin-top: 4px;
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.ac-delta-up { color: var(--color-success-strong); }
+.ac-delta-down { color: var(--color-danger-strong); }
+
+/* ---- 핵심 성과 지표 ---- */
+.ac-metric-list {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.ac-metric-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 7px;
+}
+
+.ac-metric-name {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.ac-metric-value {
+  font-size: 12.5px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.ac-metric-bar {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--content-bg);
+  overflow: hidden;
+}
+
+.ac-metric-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (max-width: 1180px) {
+  .ac-row-main {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
