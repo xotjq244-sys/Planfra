@@ -208,6 +208,14 @@ document.addEventListener("DOMContentLoaded", () => {
     stops[sidebarStopIndex].click();
   });
 
+  // ---- 단축키: q = 사이드바 접기/펼치기 (입력창에 포커스가 있을 땐 무시) ----
+  document.addEventListener("keydown", (e) => {
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.key.toLowerCase() !== "q") return;
+    if (isTypingTarget(e.target)) return;
+    sidebar.classList.toggle("collapsed");
+  });
+
   // ---------- Channel Ad Stats (mock, count-up on click) ----------
   const CHANNEL_STATS = {
     allchannels: { adCost: 4050000, adRevenue: 17900000, roas: 442, totalRevenue: 54510000 },
