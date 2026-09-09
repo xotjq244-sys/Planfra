@@ -56,33 +56,156 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   const pages = document.querySelectorAll(".page");
+
+  // 입력창(입력/텍스트영역/선택/편집가능 요소)에 포커스가 있을 때는 단축키를 무시한다
+  function isTypingTarget(target) {
+    return target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName);
+  }
+
+  // 대시보드 자리는 상단바 모드 스위치에 따라 프로젝트 대시보드 ↔ 전체판매처(광고보드)로 바뀐다.
+  function currentTopbarMode() {
+    const activeModeBtn = document.querySelector(".mode-switch-btn.is-active");
+    return activeModeBtn ? activeModeBtn.dataset.mode : "project";
+  }
+
+  const dashboardLink = document.querySelector('.nav-link[data-page="page-dashboard"]');
+  function dashboardTargetPage() {
+    if (currentTopbarMode() === "adboard" && dashboardLink) {
+      return dashboardLink.dataset.pageAdboard || "page-dashboard";
+    }
+    return "page-dashboard";
+  }
+
+  // 판매채널 페이지의 프로젝트 달성률·마감 알림 박스는 상단바 모드가 광고보드일 때 숨긴다
+  function applyChannelViewMode(page) {
+    const workRow = page.querySelector(".channel-work-row");
+    if (workRow) workRow.hidden = currentTopbarMode() === "adboard";
+  }
+
+  function showPage(targetId) {
+    pages.forEach((page) => {
+      page.hidden = page.id !== targetId;
+    });
+    const activePage = document.getElementById(targetId);
+    if (activePage) applyChannelViewMode(activePage);
+    const channel = targetId.replace("page-", "");
+    if (CHANNEL_STATS[channel]) animateChannelStats(channel);
+    if (channel === "allchannels") renderChannelShareDonuts();
+    renderChannelAlerts(channel);
+  }
+
   document.querySelectorAll(".nav-link").forEach((link) => {
     link.addEventListener("click", () => {
-      const targetId = link.dataset.page || "page-dashboard";
-      pages.forEach((page) => {
-        page.hidden = page.id !== targetId;
-      });
-      const channel = targetId.replace("page-", "");
-      if (CHANNEL_STATS[channel]) animateChannelStats(channel);
-      renderChannelAlerts(channel);
+      let targetId = link.dataset.page || "page-dashboard";
+      if (link === dashboardLink) targetId = dashboardTargetPage();
+      showPage(targetId);
     });
   });
 
-  // ---------- Channel view toggle (프로젝트 / 광고) ----------
-  // 광고 보기에서는 프로젝트 달성률·마감 알림 박스를 숨기고 광고 지표 카드만 남긴다
-  document.querySelectorAll(".channel-view-tabs").forEach((tabs) => {
-    const page = tabs.closest(".page");
-    const workRow = page.querySelector(".channel-work-row");
-    tabs.addEventListener("click", (e) => {
-      const btn = e.target.closest(".channel-view-btn");
-      if (!btn) return;
-      tabs.querySelectorAll(".channel-view-btn").forEach((b) => {
+  // ---------- Topbar mode switch (프로젝트 / 광고보드) ----------
+  const modeSwitch = document.querySelector(".mode-switch");
+  if (modeSwitch) {
+    const modeThumb = modeSwitch.querySelector(".mode-switch-thumb");
+    const modeBtns = Array.from(modeSwitch.querySelectorAll(".mode-switch-btn"));
+
+    const moveModeThumb = (btn) => {
+      modeThumb.style.width = `${btn.offsetWidth}px`;
+      modeThumb.style.transform = `translateX(${btn.offsetLeft}px)`;
+    };
+
+    function activateModeBtn(btn) {
+      modeBtns.forEach((b) => {
         const active = b === btn;
         b.classList.toggle("is-active", active);
         b.setAttribute("aria-pressed", active ? "true" : "false");
       });
-      if (workRow) workRow.hidden = btn.dataset.channelView === "ad";
+      moveModeThumb(btn);
+
+      const visiblePage = Array.from(pages).find((p) => !p.hidden);
+      if (!visiblePage) return;
+      // 대시보드 자리를 보고 있을 때는 모드 전환과 동시에 화면을 갈아끼우고,
+      // 판매채널 페이지를 보고 있을 때는 프로젝트 달성률 박스만 보이거나 숨겨진다.
+      const isDashboardSlot = visiblePage.id === "page-dashboard" || visiblePage.id === dashboardLink?.dataset.pageAdboard;
+      if (isDashboardSlot) {
+        showPage(dashboardTargetPage());
+        document.querySelectorAll(".nav-item.active").forEach((item) => item.classList.remove("active"));
+        document.querySelectorAll(".submenu .nav-link.active").forEach((a) => a.classList.remove("active"));
+        dashboardLink?.parentElement.classList.add("active");
+      } else {
+        applyChannelViewMode(visiblePage);
+      }
+    }
+
+    modeBtns.forEach((btn) => {
+      btn.addEventListener("click", () => activateModeBtn(btn));
     });
+
+    requestAnimationFrame(() => {
+      moveModeThumb(modeSwitch.querySelector(".mode-switch-btn.is-active") || modeBtns[0]);
+    });
+
+    window.addEventListener("resize", () => {
+      const active = modeSwitch.querySelector(".mode-switch-btn.is-active");
+      if (active) moveModeThumb(active);
+    });
+
+    // ---- 단축키: a = 프로젝트, d = 광고보드 (입력창에 포커스가 있을 땐 무시) ----
+    const MODE_HOTKEYS = { a: "project", d: "adboard" };
+    document.addEventListener("keydown", (e) => {
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      const mode = MODE_HOTKEYS[e.key.toLowerCase()];
+      if (!mode) return;
+      if (isTypingTarget(e.target)) return;
+
+      const btn = modeBtns.find((b) => b.dataset.mode === mode);
+      if (btn && !btn.classList.contains("is-active")) {
+        activateModeBtn(btn);
+      }
+    });
+  }
+
+  // ---- 단축키: w = 사이드바 위로 이동하며 활성화, s = 아래로 이동하며 활성화 (입력창에 포커스가 있을 땐 무시) ----
+  // 판매채널처럼 서브메뉴를 여닫기만 하는 항목은 "active" 클래스가 붙지 않으므로,
+  // 현재 위치를 별도 인덱스로 직접 추적하고 마우스 클릭 시에도 같이 동기화한다.
+  function getSidebarNavStops() {
+    const stops = [];
+    document.querySelectorAll(".nav-list > .nav-item").forEach((item) => {
+      const topLink = item.querySelector(":scope > .nav-link");
+      if (!topLink) return;
+      stops.push(topLink);
+      if (item.classList.contains("has-submenu") && item.classList.contains("open")) {
+        item.querySelectorAll(":scope > .submenu li a").forEach((subLink) => stops.push(subLink));
+      }
+    });
+    return stops;
+  }
+
+  let sidebarStopIndex = -1;
+  document.querySelectorAll(".nav-link").forEach((link) => {
+    link.addEventListener("click", () => {
+      const idx = getSidebarNavStops().indexOf(link);
+      if (idx >= 0) sidebarStopIndex = idx;
+    });
+  });
+
+  const SIDEBAR_HOTKEYS = { w: -1, s: 1 };
+  document.addEventListener("keydown", (e) => {
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    const dir = SIDEBAR_HOTKEYS[e.key.toLowerCase()];
+    if (!dir) return;
+    if (isTypingTarget(e.target)) return;
+
+    const stops = getSidebarNavStops();
+    if (!stops.length) return;
+
+    if (sidebarStopIndex < 0 || sidebarStopIndex >= stops.length) {
+      sidebarStopIndex = stops.findIndex(
+        (el) => el.classList.contains("active") || el.parentElement.classList.contains("active")
+      );
+      if (sidebarStopIndex < 0) sidebarStopIndex = 0;
+    }
+    sidebarStopIndex = (sidebarStopIndex + dir + stops.length) % stops.length;
+    stops[sidebarStopIndex].click();
   });
 
   // ---------- Channel Ad Stats (mock, count-up on click) ----------
@@ -234,9 +357,13 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  function renderDonutCard(containerId, values, totalLabel) {
+  function renderDonutCard(containerId, values, totalLabel, opts) {
     const wrap = document.getElementById(containerId);
     if (!wrap) return;
+    const formatFull = (opts && opts.formatFull) || formatWon;
+    const formatCompact = (opts && opts.formatCompact) || ((v) => `${acCompactWon(v)}원`);
+    // ROAS처럼 채널별 값을 단순 합산하면 의미가 없는 지표는 opts.centerValue로 별도 계산해 넘긴다
+    const centerValue = opts && opts.centerValue != null ? opts.centerValue : null;
     const { segments, total } = buildDonutSegments(values);
     const visible = segments.filter((s) => s.fraction > 0);
     // 조각이 하나뿐이면 여백을 두지 않아야 링이 끊기지 않는다
@@ -282,13 +409,15 @@ document.addEventListener("DOMContentLoaded", () => {
           dashLen = 0.5;
           dashStart = startArc + arcLen / 2;
         }
+        // 처음엔 길이 0으로 그려 두었다가(아래 rAF) 실제 길이로 늘려 채워지는 애니메이션을 만든다
+        const finalDasharray = `${dashLen.toFixed(2)} ${(DONUT_CIRCUM - dashLen).toFixed(2)}`;
         return `
           <circle class="donut-seg" cx="${DONUT_CX}" cy="${DONUT_CY}" r="${DONUT_RADIUS}"
             fill="none" stroke="url(#${gradId(s.key)})" stroke-width="${DONUT_THICKNESS}"
             stroke-linecap="round"
-            stroke-dasharray="${dashLen.toFixed(2)} ${(DONUT_CIRCUM - dashLen).toFixed(2)}"
+            stroke-dasharray="0 ${DONUT_CIRCUM.toFixed(2)}" data-final-dasharray="${finalDasharray}"
             stroke-dashoffset="${(-dashStart).toFixed(2)}">
-            <title>${escapeHtml(s.label)} ${(s.fraction * 100).toFixed(1)}% · ${formatWon(s.value)}</title>
+            <title>${escapeHtml(s.label)} ${(s.fraction * 100).toFixed(1)}% · ${formatFull(s.value)}</title>
           </circle>`;
       })
       .join("");
@@ -326,7 +455,7 @@ document.addEventListener("DOMContentLoaded", () => {
             <circle cx="${endX.toFixed(1)}" cy="${m.y.toFixed(1)}" r="2.4" fill="${color}" />
             <text class="donut-callout-name" x="${textX.toFixed(1)}" y="${(m.y - 10).toFixed(1)}" text-anchor="${anchor}">${escapeHtml(s.label)}</text>
             <text class="donut-callout-pct" x="${textX.toFixed(1)}" y="${(m.y + 6).toFixed(1)}" text-anchor="${anchor}">${(s.fraction * 100).toFixed(1)}%</text>
-            <text class="donut-callout-amount" x="${textX.toFixed(1)}" y="${(m.y + 19).toFixed(1)}" text-anchor="${anchor}">${acCompactWon(s.value)}원</text>
+            <text class="donut-callout-amount" x="${textX.toFixed(1)}" y="${(m.y + 19).toFixed(1)}" text-anchor="${anchor}">${formatCompact(s.value)}</text>
           </g>`;
       })
       .join("");
@@ -341,10 +470,18 @@ document.addEventListener("DOMContentLoaded", () => {
         </svg>
         <div class="donut-center">
           <span class="donut-center-label">${escapeHtml(totalLabel)}</span>
-          <span class="donut-center-value">${acCompactWon(total)}원</span>
+          <span class="donut-center-value">${formatCompact(centerValue != null ? centerValue : total)}</span>
         </div>
       </div>
     `;
+
+    // 삽입 직후 0으로 그려둔 다음 프레임에서 실제 길이로 바꿔야 transition이 걸린다(같은 프레임이면 생략됨)
+    const segEls = wrap.querySelectorAll(".donut-seg[data-final-dasharray]");
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        segEls.forEach((el) => el.setAttribute("stroke-dasharray", el.dataset.finalDasharray));
+      });
+    });
   }
 
   function renderChannelShareDonuts() {
@@ -358,8 +495,19 @@ document.addEventListener("DOMContentLoaded", () => {
       label: CHANNEL_LABELS[key],
       value: getScaledChannelStats(key).adCost,
     }));
+    const roasValues = CHANNEL_SHARE_ORDER.map((key) => ({
+      key,
+      label: CHANNEL_LABELS[key],
+      value: getScaledChannelStats(key).roas,
+    }));
     renderDonutCard("revenueShareDonut", revenueValues, "전체매출");
     renderDonutCard("adCostShareDonut", adCostValues, "전체광고비");
+    // ROAS는 채널별 비중(단순 합산)과 중앙에 표시할 전체 지표(광고매출 합계 ÷ 광고비 합계)가 다르므로 따로 계산해 넘긴다
+    renderDonutCard("roasShareDonut", roasValues, "평균 ROAS", {
+      formatFull: (v) => `${v.toLocaleString("ko-KR")}%`,
+      formatCompact: (v) => `${v.toLocaleString("ko-KR")}%`,
+      centerValue: getScaledChannelStats("allchannels").roas,
+    });
   }
 
   // ---------- 전체판매처 분석 대시보드 (매출 추이 / 인사이트 / 랭킹 / 광고 집행 / 요약 / 지표) ----------
@@ -1328,6 +1476,10 @@ document.addEventListener("DOMContentLoaded", () => {
     ) {
       closeStatPopover();
     }
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && statPopover && !statPopover.hidden) closeStatPopover();
   });
 
   function renderAllTasks() {
