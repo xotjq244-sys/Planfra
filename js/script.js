@@ -2736,6 +2736,38 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let projects = loadProjects();
 
+  // ---- 담당자 목록 (시스템설정 > 프로젝트 설정에서 관리) ----
+  const ASSIGNEES_STORAGE_KEY = "planfra_assignees";
+
+  function loadAssignees() {
+    try {
+      const stored = JSON.parse(localStorage.getItem(ASSIGNEES_STORAGE_KEY));
+      return Array.isArray(stored) ? stored : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveAssignees() {
+    localStorage.setItem(ASSIGNEES_STORAGE_KEY, JSON.stringify(assignees));
+    if (window.db) window.db.collection("boardData").doc("assignees").set({ list: assignees }).catch((e) => console.error("saveAssignees sync failed", e));
+  }
+
+  let assignees = loadAssignees();
+
+  function addAssigneeName(name) {
+    const trimmed = (name || "").trim();
+    if (!trimmed || assignees.includes(trimmed)) return false;
+    assignees.push(trimmed);
+    saveAssignees();
+    return true;
+  }
+
+  function removeAssigneeName(name) {
+    assignees = assignees.filter((a) => a !== name);
+    saveAssignees();
+  }
+
   function hashString(str) {
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
@@ -2760,6 +2792,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const STATUS_ORDER = ["예정", "진행중", "보류", "완료", "종료"];
   const activeStatusFilters = new Set();
+  const activeAssigneeFilters = new Set();
+  const activeChannelFilters = new Set();
   let boardSearchQuery = "";
   let boardRangeStart = "";
   let boardRangeEnd = "";
@@ -2791,9 +2825,33 @@ document.addEventListener("DOMContentLoaded", () => {
     return STATUS_ORDER.filter((s) => activeStatusFilters.has(s));
   }
 
+  function getAssigneeOptions() {
+    const set = new Set(assignees);
+    let hasUnassigned = false;
+    projects.forEach((p) => {
+      const a = (p.assignee || "").trim();
+      if (a) set.add(a);
+      else hasUnassigned = true;
+    });
+    const list = Array.from(set).sort((a, b) => a.localeCompare(b, "ko"));
+    if (hasUnassigned) list.push("미지정");
+    return list;
+  }
+
+  function projectMatchesAssignee(p) {
+    if (activeAssigneeFilters.size === 0) return true;
+    const a = (p.assignee || "").trim() || "미지정";
+    return activeAssigneeFilters.has(a);
+  }
+
+  function projectMatchesChannel(p) {
+    if (activeChannelFilters.size === 0) return true;
+    return activeChannelFilters.has(p.channel || "쿠팡");
+  }
+
   function projectMatchesSearch(p, query) {
     if (!query) return true;
-    const haystack = [p.title, p.channel, p.status, p.priority, stripHtml(p.note), ...(p.tags || [])]
+    const haystack = [p.title, p.channel, p.status, p.priority, p.assignee, stripHtml(p.note)]
       .filter(Boolean)
       .join(" ")
       .toLowerCase();
@@ -2834,18 +2892,19 @@ document.addEventListener("DOMContentLoaded", () => {
   function renderProjectCard(p) {
     const channel = p.channel || "쿠팡";
     const channelDotColor = statusColor(channel);
+    const assignee = (p.assignee || "").trim();
     const status = p.status || "진행중";
     const statusColorPair = statusTagColor(status);
     const statusTagHtml = `<span class="board-tag" style="background:${statusColorPair.bg};color:${statusColorPair.color}">${escapeHtml(status)}</span>`;
     const priority = p.priority || "보통";
     const priorityColor = PRIORITY_TAG_COLORS[priority] || PRIORITY_TAG_COLORS["보통"];
     const priorityTagHtml = `<span class="board-tag" style="background:${priorityColor.bg};color:${priorityColor.color}">${escapeHtml(priority)}</span>`;
-    const tagsHtml = (p.tags || [])
-      .map((t) => {
-        const c = tagColor(t);
-        return `<span class="board-tag" style="background:${c.bg};color:${c.color}">${escapeHtml(t)}</span>`;
-      })
-      .join("");
+    const assigneeTagHtml = assignee
+      ? (() => {
+          const c = tagColor(assignee);
+          return `<span class="board-tag" style="background:${c.bg};color:${c.color}">${escapeHtml(assignee)}</span>`;
+        })()
+      : "";
     const progress = Math.max(0, Math.min(100, p.progress || 0));
     const createdDate = getProjectCreatedDate(p);
     const dateRows = [];
@@ -2867,7 +2926,7 @@ document.addEventListener("DOMContentLoaded", () => {
           </div>
         </div>
         ${dateRowsHtml}
-        <div class="board-card-tags">${statusTagHtml}${priorityTagHtml}${tagsHtml}</div>
+        <div class="board-card-tags">${statusTagHtml}${priorityTagHtml}${assigneeTagHtml}</div>
         <div class="board-card-progress">
           <div class="board-progress-track"><div class="board-progress-fill" style="width:${progress}%"></div></div>
           <span class="board-progress-label">${progress}%</span>
@@ -2890,10 +2949,18 @@ document.addEventListener("DOMContentLoaded", () => {
         .map((status) => {
           const allItems = groups[status] || [];
           const items = allItems.filter(
-            (p) => projectMatchesSearch(p, boardSearchQuery) && projectMatchesRange(p)
+            (p) =>
+              projectMatchesSearch(p, boardSearchQuery) &&
+              projectMatchesRange(p) &&
+              projectMatchesAssignee(p) &&
+              projectMatchesChannel(p)
           );
           const color = statusTagColor(status).color;
-          const narrowed = Boolean(boardSearchQuery) || hasActiveRange();
+          const narrowed =
+            Boolean(boardSearchQuery) ||
+            hasActiveRange() ||
+            activeAssigneeFilters.size > 0 ||
+            activeChannelFilters.size > 0;
           const emptyText = narrowed && allItems.length > 0 ? "조건에 맞는 카드가 없습니다" : "카드가 없습니다";
           const cardsHtml = items.length
             ? items.map(renderProjectCard).join("")
@@ -3000,17 +3067,17 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  function addProject(title, dueDate, tags, status, priority, progress, note, channel) {
+  function addProject(title, dueDate, status, priority, progress, note, channel, assignee) {
     const project = {
       id: `p${Date.now()}${Math.random().toString(16).slice(2, 6)}`,
       title,
       dueDate,
-      tags,
       status,
       priority,
       progress,
       note,
       channel,
+      assignee,
       createdAt: new Date().toISOString(),
     };
     if (status === "종료") project.closedAt = project.createdAt;
@@ -3018,18 +3085,18 @@ document.addEventListener("DOMContentLoaded", () => {
     saveProjects();
   }
 
-  function updateProject(id, title, dueDate, tags, status, priority, progress, note, channel) {
+  function updateProject(id, title, dueDate, status, priority, progress, note, channel, assignee) {
     const p = projects.find((item) => item.id === id);
     if (!p) return;
     p.title = title;
     p.dueDate = dueDate;
-    p.tags = tags;
     stampClosedAt(p, status);
     p.status = status;
     p.priority = priority;
     p.progress = progress;
     p.note = note;
     p.channel = channel;
+    p.assignee = assignee;
     saveProjects();
   }
 
@@ -3055,10 +3122,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const projectModalTitleText = document.getElementById("projectModalTitleText");
   const projectTitleInput = document.getElementById("projectTitleInput");
   const projectNoteInput = document.getElementById("projectNoteInput");
-  const projectTagsInput = document.getElementById("projectTagsInput");
   const projectStatusInput = document.getElementById("projectStatusInput");
   const projectPriorityInput = document.getElementById("projectPriorityInput");
   const projectChannelInput = document.getElementById("projectChannelInput");
+  const projectAssigneeInput = document.getElementById("projectAssigneeInput");
   const projectProgressInput = document.getElementById("projectProgressInput");
   const projectProgressValue = document.getElementById("projectProgressValue");
   let editingProjectId = null;
@@ -3247,15 +3314,28 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  // 설정에서 등록한 담당자 이름으로 셀렉트 옵션을 채운다.
+  // 예전 프로젝트에 남아있는, 목록에서 지워진 이름도 선택값으로 보존한다.
+  function populateAssigneeSelect(selectedValue) {
+    const current = (selectedValue || "").trim();
+    const names = Array.from(new Set(assignees));
+    if (current && !names.includes(current)) names.push(current);
+    names.sort((a, b) => a.localeCompare(b, "ko"));
+    projectAssigneeInput.innerHTML =
+      `<option value="">선택 안 함</option>` +
+      names.map((name) => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join("");
+    projectAssigneeInput.value = current;
+  }
+
   function openProjectModal(status, channel) {
     editingProjectId = null;
     projectModalTitleText.textContent = "프로젝트 추가";
     projectTitleInput.value = "";
     setProjectNoteContent("");
-    projectTagsInput.value = "";
     projectStatusInput.value = status || "진행중";
     projectPriorityInput.value = "보통";
     projectChannelInput.value = channel || "쿠팡";
+    populateAssigneeSelect("");
     setProjectProgress(0);
     setProjectDueDate("");
     closeDatePickerPopup();
@@ -3270,10 +3350,10 @@ document.addEventListener("DOMContentLoaded", () => {
     projectModalTitleText.textContent = "프로젝트 수정";
     projectTitleInput.value = p.title;
     setProjectNoteContent(p.note || "");
-    projectTagsInput.value = (p.tags || []).join(", ");
     projectStatusInput.value = p.status || "진행중";
     projectPriorityInput.value = p.priority || "보통";
     projectChannelInput.value = p.channel || "쿠팡";
+    populateAssigneeSelect(p.assignee || "");
     setProjectProgress(p.progress || 0);
     setProjectDueDate(p.dueDate || "");
     closeDatePickerPopup();
@@ -3285,19 +3365,16 @@ document.addEventListener("DOMContentLoaded", () => {
   function saveProjectFromModal() {
     const title = projectTitleInput.value.trim();
     if (!title) return;
-    const tags = projectTagsInput.value
-      .split(",")
-      .map((t) => t.trim())
-      .filter(Boolean);
     const status = projectStatusInput.value;
     const priority = projectPriorityInput.value;
     const channel = projectChannelInput.value;
+    const assignee = projectAssigneeInput.value.trim();
     const progress = parseInt(projectProgressInput.value, 10);
     const note = getProjectNoteContent();
     if (editingProjectId) {
-      updateProject(editingProjectId, title, projectDueDate, tags, status, priority, progress, note, channel);
+      updateProject(editingProjectId, title, projectDueDate, status, priority, progress, note, channel, assignee);
     } else {
-      addProject(title, projectDueDate, tags, status, priority, progress, note, channel);
+      addProject(title, projectDueDate, status, priority, progress, note, channel, assignee);
     }
   }
 
@@ -3349,6 +3426,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function openFilterPopup() {
     syncFilterCheckboxes();
+    closeAssigneeFilterPopup();
+    closeChannelFilterPopup();
     const rangePopup = document.getElementById("boardRangePopup");
     if (rangePopup) rangePopup.hidden = true;
     boardFilterPopup.hidden = false;
@@ -3389,6 +3468,158 @@ document.addEventListener("DOMContentLoaded", () => {
     document.addEventListener("click", (e) => {
       if (!boardFilterPopup.hidden && !boardFilterWrap.contains(e.target)) {
         closeFilterPopup();
+      }
+    });
+  }
+
+  // ---- 담당자 필터 ----
+  const boardAssigneeFilterWrap = document.getElementById("boardAssigneeFilterWrap");
+  const boardAssigneeFilterBtn = document.getElementById("boardAssigneeFilterBtn");
+  const boardAssigneeFilterPopup = document.getElementById("boardAssigneeFilterPopup");
+  const assigneeFilterCountBadge = document.getElementById("assigneeFilterCountBadge");
+  const assigneeFilterOptions = document.getElementById("assigneeFilterOptions");
+
+  function updateAssigneeFilterBadge() {
+    if (activeAssigneeFilters.size > 0) {
+      assigneeFilterCountBadge.textContent = activeAssigneeFilters.size;
+      assigneeFilterCountBadge.hidden = false;
+    } else {
+      assigneeFilterCountBadge.hidden = true;
+    }
+  }
+
+  function renderAssigneeFilterOptions() {
+    const options = getAssigneeOptions();
+    if (!options.length) {
+      assigneeFilterOptions.innerHTML = `<div class="board-filter-empty">등록된 담당자가 없습니다</div>`;
+      return;
+    }
+    assigneeFilterOptions.innerHTML = options
+      .map(
+        (name) => `
+          <label class="board-filter-option">
+            <input type="checkbox" class="board-assignee-filter-checkbox" value="${escapeHtml(name)}" ${activeAssigneeFilters.has(name) ? "checked" : ""}>
+            ${escapeHtml(name)}
+          </label>
+        `
+      )
+      .join("");
+  }
+
+  function openAssigneeFilterPopup() {
+    renderAssigneeFilterOptions();
+    closeFilterPopup();
+    closeChannelFilterPopup();
+    const rangePopup = document.getElementById("boardRangePopup");
+    if (rangePopup) rangePopup.hidden = true;
+    boardAssigneeFilterPopup.hidden = false;
+  }
+
+  function closeAssigneeFilterPopup() {
+    boardAssigneeFilterPopup.hidden = true;
+  }
+
+  if (boardAssigneeFilterBtn) {
+    boardAssigneeFilterBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (boardAssigneeFilterPopup.hidden) {
+        openAssigneeFilterPopup();
+      } else {
+        closeAssigneeFilterPopup();
+      }
+    });
+
+    document.getElementById("assigneeFilterApplyBtn").addEventListener("click", () => {
+      activeAssigneeFilters.clear();
+      assigneeFilterOptions.querySelectorAll(".board-assignee-filter-checkbox").forEach((cb) => {
+        if (cb.checked) activeAssigneeFilters.add(cb.value);
+      });
+      updateAssigneeFilterBadge();
+      closeAssigneeFilterPopup();
+      renderBoard();
+    });
+
+    document.getElementById("assigneeFilterResetBtn").addEventListener("click", () => {
+      activeAssigneeFilters.clear();
+      renderAssigneeFilterOptions();
+      updateAssigneeFilterBadge();
+      closeAssigneeFilterPopup();
+      renderBoard();
+    });
+
+    document.addEventListener("click", (e) => {
+      if (!boardAssigneeFilterPopup.hidden && !boardAssigneeFilterWrap.contains(e.target)) {
+        closeAssigneeFilterPopup();
+      }
+    });
+  }
+
+  // ---- 경로 필터 ----
+  const boardChannelFilterWrap = document.getElementById("boardChannelFilterWrap");
+  const boardChannelFilterBtn = document.getElementById("boardChannelFilterBtn");
+  const boardChannelFilterPopup = document.getElementById("boardChannelFilterPopup");
+  const channelFilterCountBadge = document.getElementById("channelFilterCountBadge");
+  const channelFilterCheckboxes = document.querySelectorAll(".board-channel-filter-checkbox");
+
+  function updateChannelFilterBadge() {
+    if (activeChannelFilters.size > 0) {
+      channelFilterCountBadge.textContent = activeChannelFilters.size;
+      channelFilterCountBadge.hidden = false;
+    } else {
+      channelFilterCountBadge.hidden = true;
+    }
+  }
+
+  function syncChannelFilterCheckboxes() {
+    channelFilterCheckboxes.forEach((cb) => {
+      cb.checked = activeChannelFilters.has(cb.value);
+    });
+  }
+
+  function openChannelFilterPopup() {
+    syncChannelFilterCheckboxes();
+    closeFilterPopup();
+    closeAssigneeFilterPopup();
+    const rangePopup = document.getElementById("boardRangePopup");
+    if (rangePopup) rangePopup.hidden = true;
+    boardChannelFilterPopup.hidden = false;
+  }
+
+  function closeChannelFilterPopup() {
+    boardChannelFilterPopup.hidden = true;
+  }
+
+  if (boardChannelFilterBtn) {
+    boardChannelFilterBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (boardChannelFilterPopup.hidden) {
+        openChannelFilterPopup();
+      } else {
+        closeChannelFilterPopup();
+      }
+    });
+
+    document.getElementById("channelFilterApplyBtn").addEventListener("click", () => {
+      activeChannelFilters.clear();
+      channelFilterCheckboxes.forEach((cb) => {
+        if (cb.checked) activeChannelFilters.add(cb.value);
+      });
+      updateChannelFilterBadge();
+      closeChannelFilterPopup();
+      renderBoard();
+    });
+
+    document.getElementById("channelFilterResetBtn").addEventListener("click", () => {
+      activeChannelFilters.clear();
+      syncChannelFilterCheckboxes();
+      updateChannelFilterBadge();
+      closeChannelFilterPopup();
+      renderBoard();
+    });
+
+    document.addEventListener("click", (e) => {
+      if (!boardChannelFilterPopup.hidden && !boardChannelFilterWrap.contains(e.target)) {
+        closeChannelFilterPopup();
       }
     });
   }
@@ -3551,6 +3782,8 @@ document.addEventListener("DOMContentLoaded", () => {
       e.stopPropagation();
       if (boardRangePopup.hidden) {
         closeFilterPopup();
+        closeAssigneeFilterPopup();
+        closeChannelFilterPopup();
         openRangePopup();
       } else {
         closeRangePopup();
@@ -3787,6 +4020,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function openSystemModal() {
     renderSystemStatus();
+    switchSysTab("status");
     systemModalOverlay.hidden = false;
   }
 
@@ -3819,6 +4053,81 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     renderSystemStatus();
+  }
+
+  // ---- 설정 모달 탭 전환 (시스템 상태 / 프로젝트 설정) ----
+  const sysModalTabs = document.querySelectorAll(".sys-modal-tab");
+  const sysTabPanels = document.querySelectorAll(".sys-tab-panel");
+
+  function switchSysTab(tabName) {
+    sysModalTabs.forEach((btn) => {
+      const isActive = btn.dataset.sysTab === tabName;
+      btn.classList.toggle("is-active", isActive);
+      btn.setAttribute("aria-selected", String(isActive));
+    });
+    sysTabPanels.forEach((panel) => {
+      panel.hidden = panel.dataset.sysPanel !== tabName;
+    });
+    if (tabName === "project") renderAssigneeManageList();
+  }
+
+  sysModalTabs.forEach((btn) => {
+    btn.addEventListener("click", () => switchSysTab(btn.dataset.sysTab));
+  });
+
+  // ---- 담당자 관리 (프로젝트 설정 탭) ----
+  const assigneeNameInput = document.getElementById("assigneeNameInput");
+  const assigneeAddBtn = document.getElementById("assigneeAddBtn");
+  const assigneeManageList = document.getElementById("assigneeManageList");
+  const assigneeManageEmpty = document.getElementById("assigneeManageEmpty");
+  const assigneeCountBadge = document.getElementById("assigneeCountBadge");
+
+  function renderAssigneeManageList() {
+    if (!assigneeManageList) return;
+    if (assigneeCountBadge) assigneeCountBadge.textContent = `${assignees.length}명`;
+    if (!assignees.length) {
+      assigneeManageList.innerHTML = "";
+      if (assigneeManageEmpty) assigneeManageEmpty.hidden = false;
+      return;
+    }
+    if (assigneeManageEmpty) assigneeManageEmpty.hidden = true;
+    assigneeManageList.innerHTML = assignees
+      .map((name) => {
+        const c = tagColor(name);
+        const initial = escapeHtml(name.trim().charAt(0).toUpperCase());
+        return `
+          <li class="assignee-manage-item">
+            <span class="assignee-avatar" style="background:${c.color}">${initial}</span>
+            <span class="assignee-manage-name">${escapeHtml(name)}</span>
+            <button type="button" class="assignee-manage-remove" data-remove-assignee="${escapeHtml(name)}" aria-label="삭제">${DELETE_ICON}</button>
+          </li>
+        `;
+      })
+      .join("");
+  }
+
+  function handleAddAssignee() {
+    if (!assigneeNameInput) return;
+    const added = addAssigneeName(assigneeNameInput.value);
+    if (!added) return;
+    assigneeNameInput.value = "";
+    renderAssigneeManageList();
+  }
+
+  if (assigneeAddBtn) {
+    assigneeAddBtn.addEventListener("click", handleAddAssignee);
+    assigneeNameInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        handleAddAssignee();
+      }
+    });
+    assigneeManageList.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-remove-assignee]");
+      if (!btn) return;
+      removeAssigneeName(btn.dataset.removeAssignee);
+      renderAssigneeManageList();
+    });
   }
 
   // ---------- Firebase realtime sync (팀 공유 보드) ----------
@@ -3882,6 +4191,18 @@ document.addEventListener("DOMContentLoaded", () => {
           projects = data && Array.isArray(data.list) ? data.list : [];
           localStorage.setItem(PROJECTS_STORAGE_KEY, JSON.stringify(projects));
           renderBoard();
+        })
+    );
+
+    realtimeUnsubscribers.push(
+      db
+        .collection("boardData")
+        .doc("assignees")
+        .onSnapshot((snap) => {
+          const data = snap.data();
+          assignees = data && Array.isArray(data.list) ? data.list : [];
+          localStorage.setItem(ASSIGNEES_STORAGE_KEY, JSON.stringify(assignees));
+          renderAssigneeManageList();
         })
     );
 
