@@ -3403,6 +3403,12 @@ document.addEventListener("DOMContentLoaded", () => {
     if (e.key === "Escape" && !projectModalOverlay.hidden) closeProjectModal();
   });
 
+  // 체크박스 상태에 맞춰 감싸는 옵션(label)에 선택 스타일(보라색)을 즉시 반영한다.
+  function syncOptionSelectedClass(checkbox) {
+    const option = checkbox.closest(".board-filter-option");
+    if (option) option.classList.toggle("is-selected", checkbox.checked);
+  }
+
   const boardFilterWrap = document.getElementById("boardFilterWrap");
   const boardFilterBtn = document.getElementById("boardFilterBtn");
   const boardFilterPopup = document.getElementById("boardFilterPopup");
@@ -3421,6 +3427,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function syncFilterCheckboxes() {
     filterCheckboxes.forEach((cb) => {
       cb.checked = activeStatusFilters.has(cb.value);
+      syncOptionSelectedClass(cb);
     });
   }
 
@@ -3445,6 +3452,10 @@ document.addEventListener("DOMContentLoaded", () => {
       } else {
         closeFilterPopup();
       }
+    });
+
+    boardFilterPopup.addEventListener("change", (e) => {
+      if (e.target.classList.contains("board-filter-checkbox")) syncOptionSelectedClass(e.target);
     });
 
     document.getElementById("filterApplyBtn").addEventListener("click", () => {
@@ -3495,14 +3506,15 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
     assigneeFilterOptions.innerHTML = options
-      .map(
-        (name) => `
-          <label class="board-filter-option">
-            <input type="checkbox" class="board-assignee-filter-checkbox" value="${escapeHtml(name)}" ${activeAssigneeFilters.has(name) ? "checked" : ""}>
+      .map((name) => {
+        const isSelected = activeAssigneeFilters.has(name);
+        return `
+          <label class="board-filter-option${isSelected ? " is-selected" : ""}">
+            <input type="checkbox" class="board-assignee-filter-checkbox" value="${escapeHtml(name)}" ${isSelected ? "checked" : ""}>
             ${escapeHtml(name)}
           </label>
-        `
-      )
+        `;
+      })
       .join("");
   }
 
@@ -3527,6 +3539,10 @@ document.addEventListener("DOMContentLoaded", () => {
       } else {
         closeAssigneeFilterPopup();
       }
+    });
+
+    assigneeFilterOptions.addEventListener("change", (e) => {
+      if (e.target.classList.contains("board-assignee-filter-checkbox")) syncOptionSelectedClass(e.target);
     });
 
     document.getElementById("assigneeFilterApplyBtn").addEventListener("click", () => {
@@ -3573,6 +3589,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function syncChannelFilterCheckboxes() {
     channelFilterCheckboxes.forEach((cb) => {
       cb.checked = activeChannelFilters.has(cb.value);
+      syncOptionSelectedClass(cb);
     });
   }
 
@@ -3597,6 +3614,10 @@ document.addEventListener("DOMContentLoaded", () => {
       } else {
         closeChannelFilterPopup();
       }
+    });
+
+    boardChannelFilterPopup.addEventListener("change", (e) => {
+      if (e.target.classList.contains("board-channel-filter-checkbox")) syncOptionSelectedClass(e.target);
     });
 
     document.getElementById("channelFilterApplyBtn").addEventListener("click", () => {

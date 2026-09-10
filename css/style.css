@@ -1654,19 +1654,32 @@ ul {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 6px;
+  padding: 8px 8px;
   border-radius: 8px;
+  border: 1px solid transparent;
   font-size: 13px;
   color: var(--text-main);
   cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
 .board-filter-option:hover {
   background: var(--content-bg);
 }
 
+.board-filter-option.is-selected {
+  background: var(--color-violet-bg);
+  border-color: var(--color-violet);
+  color: var(--color-violet);
+  font-weight: 600;
+}
+
+.board-filter-option.is-selected:hover {
+  background: var(--color-violet-bg);
+}
+
 .board-filter-option input {
-  accent-color: var(--sidebar-grad-start);
+  accent-color: var(--color-violet);
 }
 
 .board-filter-dot {
