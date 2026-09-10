@@ -2479,7 +2479,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const rankItem = e.target.closest(".rank-list [data-project-id], .deadline-alert-list [data-project-id]");
     if (rankItem) {
-      goToProject(rankItem.dataset.projectId);
+      if (rankItem.closest("[data-channel-rank]")) {
+        openProjectEditModal(rankItem.dataset.projectId);
+      } else {
+        goToProject(rankItem.dataset.projectId);
+      }
     }
 
     const channelNoteAddBtn = e.target.closest("[data-channel-note-add]");
@@ -2979,7 +2983,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!container) return;
     const channelLabel = CHANNEL_LABELS[channel];
     const channelProjects = projects.filter((p) => (p.channel || "쿠팡") === channelLabel);
-    renderProjectRankList(container, channelProjects, ["예정", "진행중", "보류"], "표시할 프로젝트가 없습니다");
+    renderProjectRankList(container, channelProjects, ["예정", "진행중", "보류", "완료"], "표시할 프로젝트가 없습니다");
     renderChannelAlerts(channel);
   }
 
