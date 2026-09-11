@@ -1865,6 +1865,133 @@ document.addEventListener("DOMContentLoaded", () => {
 
   renderAllChannelNotes();
 
+  // ---------- Channel Quick Links (판매처 기록노트 왼쪽 퀵링크: 바로가기 링크 모음) ----------
+  const CHANNEL_QUICKLINKS_STORAGE_KEY = "planfra_channel_quicklinks";
+
+  function loadChannelQuickLinks() {
+    try {
+      return JSON.parse(localStorage.getItem(CHANNEL_QUICKLINKS_STORAGE_KEY)) || [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveChannelQuickLinks() {
+    localStorage.setItem(CHANNEL_QUICKLINKS_STORAGE_KEY, JSON.stringify(channelQuickLinks));
+    if (window.db) window.db.collection("boardData").doc("channelQuickLinks").set({ list: channelQuickLinks }).catch((e) => console.error("saveChannelQuickLinks sync failed", e));
+  }
+
+  let channelQuickLinks = loadChannelQuickLinks();
+
+  function normalizeQuickLinkUrl(url) {
+    const trimmed = (url || "").trim();
+    if (!trimmed) return "";
+    return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+  }
+
+  function renderChannelQuickLinks(channel) {
+    const listEl = document.querySelector(`[data-channel-quicklink-list="${channel}"]`);
+    if (!listEl) return;
+
+    const links = channelQuickLinks.filter((l) => l.channel === channel);
+    if (!links.length) {
+      listEl.innerHTML = `<li class="quicklink-empty">등록된 링크가 없습니다</li>`;
+      return;
+    }
+
+    listEl.innerHTML = links
+      .map(
+        (l) => `
+      <li class="quicklink-item" data-quicklink-id="${l.id}">
+        <span class="quicklink-item-handle" draggable="true" title="드래그해서 순서 변경">
+          <svg width="10" height="16" viewBox="0 0 10 16" fill="currentColor"><circle cx="2.5" cy="2.5" r="1.4"/><circle cx="7.5" cy="2.5" r="1.4"/><circle cx="2.5" cy="8" r="1.4"/><circle cx="7.5" cy="8" r="1.4"/><circle cx="2.5" cy="13.5" r="1.4"/><circle cx="7.5" cy="13.5" r="1.4"/></svg>
+        </span>
+        <a class="quicklink-item-link" href="${escapeHtml(l.url)}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(l.url)}" draggable="false">
+          <span class="quicklink-item-dot"></span>
+          <span class="quicklink-item-label">${escapeHtml(l.label)}</span>
+        </a>
+        <button type="button" class="quicklink-item-delete" data-delete-channel-quicklink="${l.id}" title="삭제">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+      </li>
+    `
+      )
+      .join("");
+  }
+
+  function renderAllChannelQuickLinks() {
+    Object.keys(CHANNEL_LABELS).forEach(renderChannelQuickLinks);
+  }
+
+  function addChannelQuickLink(channel, label, url) {
+    const trimmedLabel = (label || "").trim();
+    const normalizedUrl = normalizeQuickLinkUrl(url);
+    if (!trimmedLabel || !normalizedUrl) return false;
+    channelQuickLinks.push({
+      id: `cql${Date.now()}${Math.random().toString(16).slice(2, 6)}`,
+      channel,
+      label: trimmedLabel,
+      url: normalizedUrl,
+      createdAt: new Date().toISOString(),
+    });
+    saveChannelQuickLinks();
+    renderChannelQuickLinks(channel);
+    return true;
+  }
+
+  function deleteChannelQuickLink(id) {
+    const link = channelQuickLinks.find((l) => l.id === id);
+    channelQuickLinks = channelQuickLinks.filter((l) => l.id !== id);
+    saveChannelQuickLinks();
+    if (link) renderChannelQuickLinks(link.channel);
+  }
+
+  function reorderChannelQuickLinks(channel, orderedIds) {
+    const channelCount = channelQuickLinks.filter((l) => l.channel === channel).length;
+    if (orderedIds.length !== channelCount) return false;
+    const reordered = orderedIds
+      .map((id) => channelQuickLinks.find((l) => l.channel === channel && l.id === id))
+      .filter(Boolean);
+    if (reordered.length !== channelCount) return false;
+    let i = 0;
+    channelQuickLinks = channelQuickLinks.map((l) => (l.channel === channel ? reordered[i++] : l));
+    saveChannelQuickLinks();
+    return true;
+  }
+
+  let quickLinkDragId = null;
+
+  function getQuickLinkDragAfterElement(list, y) {
+    const items = [...list.querySelectorAll(".quicklink-item:not(.is-dragging)")];
+    return items.reduce(
+      (closest, child) => {
+        const box = child.getBoundingClientRect();
+        const offset = y - box.top - box.height / 2;
+        if (offset < 0 && offset > closest.offset) {
+          return { offset, element: child };
+        }
+        return closest;
+      },
+      { offset: Number.NEGATIVE_INFINITY, element: null }
+    ).element;
+  }
+
+  function getQuickLinkDropIndicator(list) {
+    let indicator = list.querySelector(".quicklink-drop-indicator");
+    if (!indicator) {
+      indicator = document.createElement("li");
+      indicator.className = "quicklink-drop-indicator";
+      list.appendChild(indicator);
+    }
+    return indicator;
+  }
+
+  function removeQuickLinkDropIndicators() {
+    document.querySelectorAll(".quicklink-drop-indicator").forEach((el) => el.remove());
+  }
+
+  renderAllChannelQuickLinks();
+
   // ---------- Consultation Console (call history + manual-matched AI answers) ----------
   const CONSULT_HISTORY_KEY = "planfra_consult_history";
   const CONSULT_MANUAL_KEY = "planfra_consult_manual";
@@ -2552,6 +2679,43 @@ document.addEventListener("DOMContentLoaded", () => {
       const channel = channelNotePageBtn.dataset.channelNotePage;
       channelNotePages[channel] = Number(channelNotePageBtn.dataset.pageNum);
       renderChannelNotes(channel);
+      return;
+    }
+
+    const channelQuickLinkToggleBtn = e.target.closest("[data-channel-quicklink-toggle]");
+    if (channelQuickLinkToggleBtn) {
+      const channel = channelQuickLinkToggleBtn.dataset.channelQuicklinkToggle;
+      const formEl = document.querySelector(`[data-channel-quicklink-form="${channel}"]`);
+      if (formEl) {
+        formEl.hidden = !formEl.hidden;
+        if (!formEl.hidden) {
+          const labelInput = document.querySelector(`[data-channel-quicklink-label="${channel}"]`);
+          if (labelInput) labelInput.focus();
+        }
+      }
+      return;
+    }
+
+    const channelQuickLinkAddBtn = e.target.closest("[data-channel-quicklink-add]");
+    if (channelQuickLinkAddBtn) {
+      const channel = channelQuickLinkAddBtn.dataset.channelQuicklinkAdd;
+      const labelInput = document.querySelector(`[data-channel-quicklink-label="${channel}"]`);
+      const urlInput = document.querySelector(`[data-channel-quicklink-url="${channel}"]`);
+      const formEl = document.querySelector(`[data-channel-quicklink-form="${channel}"]`);
+      if (labelInput && urlInput) {
+        const added = addChannelQuickLink(channel, labelInput.value, urlInput.value);
+        if (added) {
+          labelInput.value = "";
+          urlInput.value = "";
+          if (formEl) formEl.hidden = true;
+        }
+      }
+      return;
+    }
+
+    const deleteChannelQuickLinkBtn = e.target.closest("[data-delete-channel-quicklink]");
+    if (deleteChannelQuickLinkBtn) {
+      deleteChannelQuickLink(deleteChannelQuickLinkBtn.dataset.deleteChannelQuicklink);
     }
   });
 
@@ -2580,6 +2744,81 @@ document.addEventListener("DOMContentLoaded", () => {
         if (note) renderChannelNotes(note.channel);
       }
     }
+
+    const quickLinkLabelInput = e.target.closest("[data-channel-quicklink-label]");
+    if (quickLinkLabelInput && e.key === "Enter") {
+      e.preventDefault();
+      const channel = quickLinkLabelInput.dataset.channelQuicklinkLabel;
+      const urlInput = document.querySelector(`[data-channel-quicklink-url="${channel}"]`);
+      if (urlInput) urlInput.focus();
+      return;
+    }
+
+    const quickLinkUrlInput = e.target.closest("[data-channel-quicklink-url]");
+    if (quickLinkUrlInput && e.key === "Enter") {
+      e.preventDefault();
+      const channel = quickLinkUrlInput.dataset.channelQuicklinkUrl;
+      const labelInput = document.querySelector(`[data-channel-quicklink-label="${channel}"]`);
+      const formEl = document.querySelector(`[data-channel-quicklink-form="${channel}"]`);
+      const added = addChannelQuickLink(channel, labelInput ? labelInput.value : "", quickLinkUrlInput.value);
+      if (added) {
+        if (labelInput) labelInput.value = "";
+        quickLinkUrlInput.value = "";
+        if (formEl) formEl.hidden = true;
+      }
+    }
+  });
+
+  contentEl.addEventListener("dragstart", (e) => {
+    const handle = e.target.closest(".quicklink-item-handle");
+    if (!handle) return;
+    const item = handle.closest(".quicklink-item");
+    if (!item) return;
+    quickLinkDragId = item.dataset.quicklinkId;
+    item.classList.add("is-dragging");
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", quickLinkDragId);
+  });
+
+  contentEl.addEventListener("dragover", (e) => {
+    if (!quickLinkDragId) return;
+    const list = e.target.closest("[data-channel-quicklink-list]");
+    if (!list) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    const indicator = getQuickLinkDropIndicator(list);
+    const afterEl = getQuickLinkDragAfterElement(list, e.clientY);
+    if (afterEl == null) {
+      list.appendChild(indicator);
+    } else if (afterEl !== indicator) {
+      list.insertBefore(indicator, afterEl);
+    }
+  });
+
+  contentEl.addEventListener("drop", (e) => {
+    const list = e.target.closest("[data-channel-quicklink-list]");
+    if (!list || !quickLinkDragId) return;
+    e.preventDefault();
+    const channel = list.dataset.channelQuicklinkList;
+    const indicator = list.querySelector(".quicklink-drop-indicator");
+    if (!indicator) {
+      // 드래그 도중 목록이 외부 요인(예: 다른 탭/사용자의 변경 동기화)으로 다시 그려져
+      // 표시선이 사라진 경우: 순서를 함부로 재구성하면 데이터가 꼬일 수 있으므로 그대로 둔다.
+      renderChannelQuickLinks(channel);
+      return;
+    }
+    const orderedIds = [...list.children]
+      .filter((el) => (el.classList.contains("quicklink-item") && !el.classList.contains("is-dragging")) || el === indicator)
+      .map((el) => (el === indicator ? quickLinkDragId : el.dataset.quicklinkId));
+    reorderChannelQuickLinks(channel, orderedIds);
+    removeQuickLinkDropIndicators();
+    renderChannelQuickLinks(channel);
+  });
+
+  contentEl.addEventListener("dragend", () => {
+    document.querySelectorAll(".quicklink-item.is-dragging").forEach((el) => el.classList.remove("is-dragging"));
+    removeQuickLinkDropIndicators();
+    quickLinkDragId = null;
   });
 
   contentEl.addEventListener("change", (e) => {
@@ -4183,6 +4422,18 @@ document.addEventListener("DOMContentLoaded", () => {
           channelNotes = data && Array.isArray(data.list) ? data.list : [];
           localStorage.setItem(CHANNEL_NOTES_STORAGE_KEY, JSON.stringify(channelNotes));
           renderAllChannelNotes();
+        })
+    );
+
+    realtimeUnsubscribers.push(
+      db
+        .collection("boardData")
+        .doc("channelQuickLinks")
+        .onSnapshot((snap) => {
+          const data = snap.data();
+          channelQuickLinks = data && Array.isArray(data.list) ? data.list : [];
+          localStorage.setItem(CHANNEL_QUICKLINKS_STORAGE_KEY, JSON.stringify(channelQuickLinks));
+          renderAllChannelQuickLinks();
         })
     );
 
