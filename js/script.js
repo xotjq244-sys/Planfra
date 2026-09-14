@@ -1992,6 +1992,51 @@ document.addEventListener("DOMContentLoaded", () => {
 
   renderAllChannelQuickLinks();
 
+  // ---------- Profit Calculator (이익계산기: 판매가/원가/수수료 등으로 예상 이익 계산) ----------
+  const profitCalcInputs = {
+    price: document.getElementById("profitCalcPrice"),
+    cost: document.getElementById("profitCalcCost"),
+    feeRate: document.getElementById("profitCalcFeeRate"),
+    shipping: document.getElementById("profitCalcShipping"),
+    etc: document.getElementById("profitCalcEtc"),
+  };
+  const profitCalcOutputs = {
+    feeAmount: document.getElementById("profitCalcFeeAmount"),
+    totalCost: document.getElementById("profitCalcTotalCost"),
+    profit: document.getElementById("profitCalcProfit"),
+    rate: document.getElementById("profitCalcRate"),
+  };
+
+  function formatProfitWon(value) {
+    return `${Math.round(value).toLocaleString("ko-KR")}원`;
+  }
+
+  function calcProfit() {
+    if (!profitCalcInputs.price) return;
+    const price = Number(profitCalcInputs.price.value) || 0;
+    const cost = Number(profitCalcInputs.cost.value) || 0;
+    const feeRate = Number(profitCalcInputs.feeRate.value) || 0;
+    const shipping = Number(profitCalcInputs.shipping.value) || 0;
+    const etc = Number(profitCalcInputs.etc.value) || 0;
+
+    const feeAmount = price * (feeRate / 100);
+    const totalCost = cost + feeAmount + shipping + etc;
+    const profit = price - totalCost;
+    const rate = price > 0 ? (profit / price) * 100 : 0;
+
+    profitCalcOutputs.feeAmount.textContent = formatProfitWon(feeAmount);
+    profitCalcOutputs.totalCost.textContent = formatProfitWon(totalCost);
+    profitCalcOutputs.profit.textContent = formatProfitWon(profit);
+    profitCalcOutputs.profit.classList.toggle("stat-value-danger", profit < 0);
+    profitCalcOutputs.rate.textContent = `${rate.toLocaleString("ko-KR", { maximumFractionDigits: 1 })}%`;
+    profitCalcOutputs.rate.classList.toggle("stat-value-danger", rate < 0);
+  }
+
+  Object.values(profitCalcInputs).forEach((input) => {
+    if (input) input.addEventListener("input", calcProfit);
+  });
+  calcProfit();
+
   // ---------- Consultation Console (call history + manual-matched AI answers) ----------
   const CONSULT_HISTORY_KEY = "planfra_consult_history";
   const CONSULT_MANUAL_KEY = "planfra_consult_manual";
