@@ -2898,6 +2898,20 @@ body.board-dragging-active .board-card {
   gap: 4px 8px;
 }
 
+.dashboard-quicklink-panel {
+  flex: 1;
+  min-width: 260px;
+  max-width: 360px;
+  min-height: 548px;
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-quicklink-panel .panel-header-actions {
+  flex-wrap: wrap;
+  gap: 4px 8px;
+}
+
 .quicklink-input-row {
   display: flex;
   flex-direction: column;
