@@ -1919,8 +1919,11 @@ document.addEventListener("DOMContentLoaded", () => {
       .join("");
   }
 
+  const QUICKLINK_EXTRA_SCOPES = ["dashboard"];
+
   function renderAllChannelQuickLinks() {
     Object.keys(CHANNEL_LABELS).forEach(renderChannelQuickLinks);
+    QUICKLINK_EXTRA_SCOPES.forEach(renderChannelQuickLinks);
   }
 
   function addChannelQuickLink(channel, label, url) {

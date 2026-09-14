@@ -221,6 +221,18 @@
       </div>
 
       <section class="dashboard-work-row">
+        <div class="panel channel-quicklink-panel">
+          <div class="panel-header panel-header-actions">
+            <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M10 14L14 10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M8.5 15.5L6 18a3.5 3.5 0 01-5-5l3-3a3.5 3.5 0 015 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M15.5 8.5L18 6a3.5 3.5 0 015 5l-3 3a3.5 3.5 0 01-5 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg> 퀵링크</h2>
+            <button type="button" class="link-btn" data-channel-quicklink-toggle="dashboard">+ 링크 추가</button>
+          </div>
+          <div class="quicklink-input-row" data-channel-quicklink-form="dashboard" hidden>
+            <input type="text" class="quicklink-label-input" data-channel-quicklink-label="dashboard" placeholder="이름" maxlength="20">
+            <input type="text" class="quicklink-url-input" data-channel-quicklink-url="dashboard" placeholder="https://...">
+            <button type="button" class="btn btn-primary quicklink-add-btn" data-channel-quicklink-add="dashboard">추가</button>
+          </div>
+          <ul class="quicklink-list" data-channel-quicklink-list="dashboard"></ul>
+        </div>
         <div class="panel panel-tall quicknote-panel">
           <div class="panel-header">
             <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 4H16L20 8V20H4V4Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M16 4V8H20" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 12H16M8 16H13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg> 간편 기록노트</h2>
