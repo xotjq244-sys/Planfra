@@ -1889,6 +1889,8 @@ document.addEventListener("DOMContentLoaded", () => {
     return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
   }
 
+  let quickLinkEditingId = null;
+
   function renderChannelQuickLinks(channel) {
     const listEl = document.querySelector(`[data-channel-quicklink-list="${channel}"]`);
     if (!listEl) return;
@@ -1900,8 +1902,24 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     listEl.innerHTML = links
-      .map(
-        (l) => `
+      .map((l) => {
+        if (l.id === quickLinkEditingId) {
+          return `
+      <li class="quicklink-item is-editing" data-quicklink-id="${l.id}">
+        <div class="quicklink-edit-fields">
+          <input type="text" class="quicklink-edit-label-input" data-edit-channel-quicklink-label="${l.id}" value="${escapeHtml(l.label)}" placeholder="이름" maxlength="20">
+          <input type="text" class="quicklink-edit-url-input" data-edit-channel-quicklink-url="${l.id}" value="${escapeHtml(l.url)}" placeholder="https://...">
+        </div>
+        <button type="button" class="quicklink-item-save" data-save-channel-quicklink="${l.id}" title="저장">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M5 13L9 17L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button type="button" class="quicklink-item-cancel" data-cancel-channel-quicklink-edit="${l.id}" title="취소">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+      </li>
+    `;
+        }
+        return `
       <li class="quicklink-item" data-quicklink-id="${l.id}">
         <span class="quicklink-item-handle" title="드래그해서 순서 변경">
           <svg width="10" height="16" viewBox="0 0 10 16" fill="currentColor"><circle cx="2.5" cy="2.5" r="1.4"/><circle cx="7.5" cy="2.5" r="1.4"/><circle cx="2.5" cy="8" r="1.4"/><circle cx="7.5" cy="8" r="1.4"/><circle cx="2.5" cy="13.5" r="1.4"/><circle cx="7.5" cy="13.5" r="1.4"/></svg>
@@ -1910,12 +1928,15 @@ document.addEventListener("DOMContentLoaded", () => {
           <span class="quicklink-item-dot"></span>
           <span class="quicklink-item-label">${escapeHtml(l.label)}</span>
         </a>
+        <button type="button" class="quicklink-item-edit" data-edit-channel-quicklink="${l.id}" title="수정">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4L16.5 3.5z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
         <button type="button" class="quicklink-item-delete" data-delete-channel-quicklink="${l.id}" title="삭제">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
         </button>
       </li>
-    `
-      )
+    `;
+      })
       .join("");
   }
 
@@ -1947,6 +1968,18 @@ document.addEventListener("DOMContentLoaded", () => {
     channelQuickLinks = channelQuickLinks.filter((l) => l.id !== id);
     saveChannelQuickLinks();
     if (link) renderChannelQuickLinks(link.channel);
+  }
+
+  function updateChannelQuickLink(id, label, url) {
+    const trimmedLabel = (label || "").trim();
+    const normalizedUrl = normalizeQuickLinkUrl(url);
+    if (!trimmedLabel || !normalizedUrl) return false;
+    const link = channelQuickLinks.find((l) => l.id === id);
+    if (!link) return false;
+    link.label = trimmedLabel;
+    link.url = normalizedUrl;
+    saveChannelQuickLinks();
+    return true;
   }
 
   function reorderChannelQuickLinks(channel, orderedIds) {
@@ -2764,6 +2797,34 @@ document.addEventListener("DOMContentLoaded", () => {
     const deleteChannelQuickLinkBtn = e.target.closest("[data-delete-channel-quicklink]");
     if (deleteChannelQuickLinkBtn) {
       deleteChannelQuickLink(deleteChannelQuickLinkBtn.dataset.deleteChannelQuicklink);
+      return;
+    }
+
+    const editChannelQuickLinkBtn = e.target.closest("[data-edit-channel-quicklink]");
+    if (editChannelQuickLinkBtn) {
+      quickLinkEditingId = editChannelQuickLinkBtn.dataset.editChannelQuicklink;
+      const link = channelQuickLinks.find((l) => l.id === quickLinkEditingId);
+      if (link) renderChannelQuickLinks(link.channel);
+      return;
+    }
+
+    const saveChannelQuickLinkBtn = e.target.closest("[data-save-channel-quicklink]");
+    if (saveChannelQuickLinkBtn) {
+      const id = saveChannelQuickLinkBtn.dataset.saveChannelQuicklink;
+      const link = channelQuickLinks.find((l) => l.id === id);
+      const labelInput = document.querySelector(`[data-edit-channel-quicklink-label="${id}"]`);
+      const urlInput = document.querySelector(`[data-edit-channel-quicklink-url="${id}"]`);
+      if (labelInput && urlInput) updateChannelQuickLink(id, labelInput.value, urlInput.value);
+      quickLinkEditingId = null;
+      if (link) renderChannelQuickLinks(link.channel);
+      return;
+    }
+
+    const cancelChannelQuickLinkEditBtn = e.target.closest("[data-cancel-channel-quicklink-edit]");
+    if (cancelChannelQuickLinkEditBtn) {
+      const link = channelQuickLinks.find((l) => l.id === cancelChannelQuickLinkEditBtn.dataset.cancelChannelQuicklinkEdit);
+      quickLinkEditingId = null;
+      if (link) renderChannelQuickLinks(link.channel);
     }
   });
 
@@ -2813,6 +2874,29 @@ document.addEventListener("DOMContentLoaded", () => {
         if (labelInput) labelInput.value = "";
         quickLinkUrlInput.value = "";
         if (formEl) formEl.hidden = true;
+      }
+      return;
+    }
+
+    const editQuickLinkLabelInput = e.target.closest("[data-edit-channel-quicklink-label]");
+    const editQuickLinkUrlInput = e.target.closest("[data-edit-channel-quicklink-url]");
+    const editQuickLinkInput = editQuickLinkLabelInput || editQuickLinkUrlInput;
+    if (editQuickLinkInput) {
+      const id = editQuickLinkLabelInput
+        ? editQuickLinkLabelInput.dataset.editChannelQuicklinkLabel
+        : editQuickLinkUrlInput.dataset.editChannelQuicklinkUrl;
+      if (e.key === "Enter") {
+        e.preventDefault();
+        const link = channelQuickLinks.find((l) => l.id === id);
+        const labelInput = document.querySelector(`[data-edit-channel-quicklink-label="${id}"]`);
+        const urlInput = document.querySelector(`[data-edit-channel-quicklink-url="${id}"]`);
+        if (labelInput && urlInput) updateChannelQuickLink(id, labelInput.value, urlInput.value);
+        quickLinkEditingId = null;
+        if (link) renderChannelQuickLinks(link.channel);
+      } else if (e.key === "Escape") {
+        const link = channelQuickLinks.find((l) => l.id === id);
+        quickLinkEditingId = null;
+        if (link) renderChannelQuickLinks(link.channel);
       }
     }
   });

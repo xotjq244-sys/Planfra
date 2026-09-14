@@ -3035,7 +3035,10 @@ body.quicklink-dragging-active .quicklink-item-handle {
   white-space: nowrap;
 }
 
-.quicklink-item-delete {
+.quicklink-item-edit,
+.quicklink-item-delete,
+.quicklink-item-save,
+.quicklink-item-cancel {
   flex-shrink: 0;
   border: none;
   background: transparent;
@@ -3043,16 +3046,54 @@ body.quicklink-dragging-active .quicklink-item-handle {
   cursor: pointer;
   width: 24px;
   height: 24px;
-  margin-right: 4px;
   border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.quicklink-item-delete:hover {
+.quicklink-item-delete,
+.quicklink-item-cancel {
+  margin-right: 4px;
+}
+
+.quicklink-item-edit:hover,
+.quicklink-item-save:hover {
+  background: var(--card-bg);
+  color: var(--sidebar-grad-start);
+}
+
+.quicklink-item-delete:hover,
+.quicklink-item-cancel:hover {
   background: var(--card-bg);
   color: var(--color-danger);
+}
+
+.quicklink-item.is-editing {
+  align-items: stretch;
+}
+
+.quicklink-edit-fields {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 0 8px 8px;
+}
+
+.quicklink-edit-label-input,
+.quicklink-edit-url-input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--sidebar-grad-start);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-family: inherit;
+  font-size: 12.5px;
+  color: var(--text-main);
+  background: var(--card-bg);
+  outline: none;
 }
 
 .quicklink-empty {
