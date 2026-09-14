@@ -2885,9 +2885,9 @@ body.board-dragging-active .board-card {
 }
 
 .channel-quicklink-panel {
-  flex: 0 1 190px;
-  min-width: 170px;
-  max-width: 220px;
+  flex: 1 1 260px;
+  min-width: 260px;
+  max-width: 340px;
   min-height: 548px;
   display: flex;
   flex-direction: column;
@@ -3309,10 +3309,16 @@ body.quicklink-dragging-active .quicklink-item-handle {
   .dashboard-work-row {
     flex-direction: column;
   }
+}
+
+/* 채널 페이지는 박스가 4개(퀵링크/기록노트/달성률/마감알림)라 더 넓은 화면부터
+   한 줄에 다 넣기가 빠듯해서, 대시보드보다 이른 폭에서 세로로 쌓는다 */
+@media (max-width: 1300px) {
   .channel-work-row {
     flex-direction: column;
   }
-  .deadline-alert-panel {
+  .deadline-alert-panel,
+  .channel-quicklink-panel {
     max-width: none;
   }
 }
