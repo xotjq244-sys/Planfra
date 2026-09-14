@@ -1281,7 +1281,7 @@ document.addEventListener("DOMContentLoaded", () => {
     overdue: "마감기한이 지났는데 아직 완료 처리되지 않은 프로젝트",
     urgent: "우선순위 '긴급' + 마감까지 1일 이내(오늘·내일) 남은 미완료 프로젝트",
     soon: "마감까지 3일 이내(마감 당일 포함) 남은 미완료 프로젝트",
-    incomplete: "상태가 '완료'·'종료'가 아닌 전체 프로젝트",
+    incomplete: "상태가 '예정' 또는 '진행중'인 프로젝트 (보류·완료·종료 제외)",
     scheduled: "아직 시작하지 않은 상태가 '예정'인 프로젝트",
     closedThisMonth: "이번 달에 '종료'로 처리된 프로젝트 (종료 기록이 없는 예전 데이터는 마감일 기준)",
   };
@@ -1317,7 +1317,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const statClosedMonth = document.getElementById("statClosedMonthCount");
     if (!statOverdue && !statToday && !statSoon && !statPending && !statScheduled && !statClosedMonth) return;
 
-    const incomplete = projects.filter((p) => !["완료", "종료"].includes(p.status || "진행중"));
+    const incomplete = projects.filter((p) => ["예정", "진행중"].includes(p.status || "진행중"));
 
     const overdueProjects = incomplete.filter((p) => {
       const diff = getProjectDueDiffDays(p.dueDate);
