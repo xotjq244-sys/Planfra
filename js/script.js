@@ -1903,10 +1903,10 @@ document.addEventListener("DOMContentLoaded", () => {
       .map(
         (l) => `
       <li class="quicklink-item" data-quicklink-id="${l.id}">
-        <span class="quicklink-item-handle" draggable="true" title="드래그해서 순서 변경">
+        <span class="quicklink-item-handle" title="드래그해서 순서 변경">
           <svg width="10" height="16" viewBox="0 0 10 16" fill="currentColor"><circle cx="2.5" cy="2.5" r="1.4"/><circle cx="7.5" cy="2.5" r="1.4"/><circle cx="2.5" cy="8" r="1.4"/><circle cx="7.5" cy="8" r="1.4"/><circle cx="2.5" cy="13.5" r="1.4"/><circle cx="7.5" cy="13.5" r="1.4"/></svg>
         </span>
-        <a class="quicklink-item-link" href="${escapeHtml(l.url)}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(l.url)}" draggable="false">
+        <a class="quicklink-item-link" href="${escapeHtml(l.url)}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(l.url)}">
           <span class="quicklink-item-dot"></span>
           <span class="quicklink-item-label">${escapeHtml(l.label)}</span>
         </a>
@@ -2814,56 +2814,65 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  contentEl.addEventListener("dragstart", (e) => {
+  // 네이티브 HTML5 DnD는 실제 사용 환경(브라우저/보안 소프트웨어 등)에 따라 드래그가
+  // 아예 시작되지 않거나 드롭이 씹히는 경우가 있어(프로젝트 보드 카드 드래그도 같은 이유로
+  // 커스텀 마우스 드래그로 구현되어 있다), 퀵링크도 동일하게 mousedown/mousemove/mouseup
+  // 기반의 커스텀 드래그로 구현한다.
+  const QUICKLINK_DRAG_MOVE_THRESHOLD = 4;
+
+  contentEl.addEventListener("mousedown", (e) => {
+    if (e.button !== 0) return;
     const handle = e.target.closest(".quicklink-item-handle");
     if (!handle) return;
     const item = handle.closest(".quicklink-item");
-    if (!item) return;
-    quickLinkDragId = item.dataset.quicklinkId;
-    item.classList.add("is-dragging");
-    e.dataTransfer.effectAllowed = "move";
-    e.dataTransfer.setData("text/plain", quickLinkDragId);
-  });
+    const list = item && item.closest("[data-channel-quicklink-list]");
+    if (!item || !list) return;
 
-  contentEl.addEventListener("dragover", (e) => {
-    if (!quickLinkDragId) return;
-    const list = e.target.closest("[data-channel-quicklink-list]");
-    if (!list) return;
     e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
-    const indicator = getQuickLinkDropIndicator(list);
-    const afterEl = getQuickLinkDragAfterElement(list, e.clientY);
-    if (afterEl == null) {
-      list.appendChild(indicator);
-    } else if (afterEl !== indicator) {
-      list.insertBefore(indicator, afterEl);
-    }
-  });
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const draggedId = item.dataset.quicklinkId;
+    let dragging = false;
 
-  contentEl.addEventListener("drop", (e) => {
-    const list = e.target.closest("[data-channel-quicklink-list]");
-    if (!list || !quickLinkDragId) return;
-    e.preventDefault();
-    const channel = list.dataset.channelQuicklinkList;
-    const indicator = list.querySelector(".quicklink-drop-indicator");
-    if (!indicator) {
-      // 드래그 도중 목록이 외부 요인(예: 다른 탭/사용자의 변경 동기화)으로 다시 그려져
-      // 표시선이 사라진 경우: 순서를 함부로 재구성하면 데이터가 꼬일 수 있으므로 그대로 둔다.
-      renderChannelQuickLinks(channel);
-      return;
+    function onMouseMove(ev) {
+      if (!dragging) {
+        if (Math.hypot(ev.clientX - startX, ev.clientY - startY) < QUICKLINK_DRAG_MOVE_THRESHOLD) return;
+        dragging = true;
+        quickLinkDragId = draggedId;
+        item.classList.add("is-dragging");
+        document.body.classList.add("quicklink-dragging-active");
+      }
+      const indicator = getQuickLinkDropIndicator(list);
+      const afterEl = getQuickLinkDragAfterElement(list, ev.clientY);
+      if (afterEl == null) {
+        list.appendChild(indicator);
+      } else if (afterEl !== indicator) {
+        list.insertBefore(indicator, afterEl);
+      }
     }
-    const orderedIds = [...list.children]
-      .filter((el) => (el.classList.contains("quicklink-item") && !el.classList.contains("is-dragging")) || el === indicator)
-      .map((el) => (el === indicator ? quickLinkDragId : el.dataset.quicklinkId));
-    reorderChannelQuickLinks(channel, orderedIds);
-    removeQuickLinkDropIndicators();
-    renderChannelQuickLinks(channel);
-  });
 
-  contentEl.addEventListener("dragend", () => {
-    document.querySelectorAll(".quicklink-item.is-dragging").forEach((el) => el.classList.remove("is-dragging"));
-    removeQuickLinkDropIndicators();
-    quickLinkDragId = null;
+    function onMouseUp() {
+      document.removeEventListener("mousemove", onMouseMove);
+      document.removeEventListener("mouseup", onMouseUp);
+      document.body.classList.remove("quicklink-dragging-active");
+
+      if (dragging) {
+        const channel = list.dataset.channelQuicklinkList;
+        const indicator = list.querySelector(".quicklink-drop-indicator");
+        if (indicator) {
+          const orderedIds = [...list.children]
+            .filter((el) => (el.classList.contains("quicklink-item") && !el.classList.contains("is-dragging")) || el === indicator)
+            .map((el) => (el === indicator ? draggedId : el.dataset.quicklinkId));
+          reorderChannelQuickLinks(channel, orderedIds);
+        }
+        removeQuickLinkDropIndicators();
+        renderChannelQuickLinks(channel);
+      }
+      quickLinkDragId = null;
+    }
+
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", onMouseUp);
   });
 
   contentEl.addEventListener("change", (e) => {
