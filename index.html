@@ -81,24 +81,6 @@
           </ul>
         </li>
 
-        <li class="nav-item">
-          <a href="#" class="nav-link" data-page="page-calculator">
-            <span class="nav-icon">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="4" y="2" width="16" height="20" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M8 6H16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8.2" cy="11" r="1" fill="currentColor"/><circle cx="12" cy="11" r="1" fill="currentColor"/><circle cx="15.8" cy="11" r="1" fill="currentColor"/><circle cx="8.2" cy="14.6" r="1" fill="currentColor"/><circle cx="12" cy="14.6" r="1" fill="currentColor"/><circle cx="15.8" cy="14.6" r="1" fill="currentColor"/><circle cx="8.2" cy="18.2" r="1" fill="currentColor"/><circle cx="12" cy="18.2" r="1" fill="currentColor"/><circle cx="15.8" cy="18.2" r="1" fill="currentColor"/></svg>
-            </span>
-            <span class="nav-label">마진계산기</span>
-          </a>
-        </li>
-
-        <li class="nav-item">
-          <a href="#" class="nav-link" data-page="page-profit-calculator">
-            <span class="nav-icon">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M19 5L5 19" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="7" cy="7" r="2.4" stroke="currentColor" stroke-width="1.8"/><circle cx="17" cy="17" r="2.4" stroke="currentColor" stroke-width="1.8"/></svg>
-            </span>
-            <span class="nav-label">이익계산기</span>
-          </a>
-        </li>
-
       </ul>
 
       <div class="sidebar-footer">
@@ -947,73 +929,6 @@
             </div>
             <ul class="deadline-alert-list" data-deadline-alerts="talkdeal"></ul>
           </aside>
-        </div>
-      </div>
-
-      <div id="page-profit-calculator" class="page" hidden>
-        <div class="content-heading">
-          <h1>이익계산기</h1>
-          <p>판매가와 원가, 수수료·배송비 등을 입력하면 예상 이익과 이익률을 바로 계산합니다.</p>
-        </div>
-        <div class="channel-work-row">
-          <div class="panel profit-calc-input-panel">
-            <div class="panel-header">
-              <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="4" y="2" width="16" height="20" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M8 6H16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="8.2" cy="11" r="1" fill="currentColor"/><circle cx="12" cy="11" r="1" fill="currentColor"/><circle cx="15.8" cy="11" r="1" fill="currentColor"/><circle cx="8.2" cy="14.6" r="1" fill="currentColor"/><circle cx="12" cy="14.6" r="1" fill="currentColor"/><circle cx="15.8" cy="14.6" r="1" fill="currentColor"/></svg> 입력값</h2>
-            </div>
-            <div class="profit-calc-form">
-              <label class="profit-calc-field">
-                <span>판매가 (원)</span>
-                <input type="number" inputmode="decimal" min="0" id="profitCalcPrice" placeholder="0">
-              </label>
-              <label class="profit-calc-field">
-                <span>원가 (원)</span>
-                <input type="number" inputmode="decimal" min="0" id="profitCalcCost" placeholder="0">
-              </label>
-              <label class="profit-calc-field">
-                <span>플랫폼 수수료율 (%)</span>
-                <input type="number" inputmode="decimal" min="0" step="0.1" id="profitCalcFeeRate" placeholder="0">
-              </label>
-              <label class="profit-calc-field">
-                <span>배송비 (원)</span>
-                <input type="number" inputmode="decimal" min="0" id="profitCalcShipping" placeholder="0">
-              </label>
-              <label class="profit-calc-field">
-                <span>기타 비용 (원)</span>
-                <input type="number" inputmode="decimal" min="0" id="profitCalcEtc" placeholder="0">
-              </label>
-            </div>
-          </div>
-          <div class="panel profit-calc-result-panel">
-            <div class="panel-header">
-              <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 17L9 11L13 15L21 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 7H21V13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> 계산 결과</h2>
-            </div>
-            <div class="profit-calc-result-grid">
-              <div class="stat-card">
-                <div class="stat-info">
-                  <span class="stat-label">수수료 금액</span>
-                  <span class="stat-value" id="profitCalcFeeAmount">0원</span>
-                </div>
-              </div>
-              <div class="stat-card">
-                <div class="stat-info">
-                  <span class="stat-label">총 비용</span>
-                  <span class="stat-value" id="profitCalcTotalCost">0원</span>
-                </div>
-              </div>
-              <div class="stat-card">
-                <div class="stat-info">
-                  <span class="stat-label">예상 이익</span>
-                  <span class="stat-value" id="profitCalcProfit">0원</span>
-                </div>
-              </div>
-              <div class="stat-card">
-                <div class="stat-info">
-                  <span class="stat-label">이익률</span>
-                  <span class="stat-value" id="profitCalcRate">0%</span>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 
